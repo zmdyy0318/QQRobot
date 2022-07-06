@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: decrypt secret
-      - run: |
+        run: |
           echo "Decrypting secrets..."
           gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.DECRYPT_ENV_KEY }}" --output ./.env.prod ./.env.prod.gpg
           echo "Decrypting secrets...done"
