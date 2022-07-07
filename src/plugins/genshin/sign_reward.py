@@ -5,7 +5,7 @@ from nonebot.log import logger
 
 
 class SignReward(IPluginBase):
-    __sign_success = "签到成功"
+    __sign_success = "签到成功,%s"
     __sign_fail = "签到失败,%s"
 
     async def handle(self, from_id: int, plain_text: str):
@@ -55,5 +55,5 @@ class SignReward(IPluginBase):
         if success is False:
             return self.__sign_fail % gs.get_last_error_msg()
 
-        message = "签到成功\n" + message_sign
-        return self.__sign_success
+        message = message_sign
+        return self.__sign_success % message
