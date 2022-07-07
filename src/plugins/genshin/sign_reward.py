@@ -14,7 +14,7 @@ class SignReward(IPluginBase):
         ret, cookie = db.get_value(from_id, "cookie")
         if ret is False:
             return self.__sign_fail % db.get_last_error_msg()
-        if cookie is None:
+        if cookie is None or len(cookie) == 0:
             return self.__sign_fail % "未绑定cookie"
 
         gs = API()
