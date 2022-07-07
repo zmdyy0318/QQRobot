@@ -212,8 +212,8 @@ class API:
                     return None
                 json_ret = response.json()
                 if json_ret["retcode"] != 0:
-                    logger.error("API::__httpx_get_data ret code error, retcode:%s, msg: %s" % (json_ret["code"], json_ret["message"]))
-                    self.__last_error_msg = "返回错误,请检查cookie是否有效,错误内容: %s" % json_ret["message"]
+                    logger.error("API::__httpx_get_data ret code error, retcode:%s, msg: %s" % (json_ret["retcode"], json_ret["message"]))
+                    self.__last_error_msg = "返回错误,请检查cookie是否有效或重新绑定,错误内容: %s" % json_ret["message"]
                     return None
                 ret = json_ret["data"]
                 self.__last_error_msg = ""
