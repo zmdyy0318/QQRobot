@@ -33,6 +33,8 @@ class API:
     __url_rewards_info = "https://api-takumi.mihoyo.com/event/bbs_sign_reward/home"
     __url_sign = "https://api-takumi.mihoyo.com/event/bbs_sign_reward/sign"
 
+    __url_news = "https://bbs-api.mihoyo.com/post/api/getNewsList"
+
     # 请求头数据
     __headers = {
         "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) miHoYoBBS/2.11.1",
@@ -143,6 +145,26 @@ class API:
         if code != "ok":
             return False
         return True
+
+    class NewsInfo:
+        def __init__(self, news_list: list):
+            self.news_list = news_list
+
+    async def get_news(self, page_size: int, news_type: int) -> (bool, list):
+        data_ret = await self.__get_news(page_size, news_type)
+        if data_ret is None:
+            return False, None
+        try:
+            news_list: list = data_ret["list"]
+            for new in news_list:
+                post_id: str = new["post"]["post_id"]
+                subject: str = new["post"]["subject"]
+                images: list = new["post"]["images"]
+        except (Exception,) as e:
+            logger.error("API::init_user_role dict error, e: %s" % e)
+            self.__last_error_msg = "获取新闻失败,请联系管理员"
+            return False, None
+        return True, news_list
 
     def get_last_error_msg(self):
         error_msg = self.__last_error_msg
@@ -310,6 +332,19 @@ class API:
         data = await self.__httpx_post_data(self.__url_sign, query, body, headers)
         if data is None:
             logger.error("API::__act_sign error, data is None")
+            return None
+        return data
+
+    async def __get_news(self, page_size: int, news_type: int):
+        query = {
+            "gids": "2",
+            "page_size":  page_size,
+            "type": news_type
+        }
+        headers = self.__generate_211_headers("")
+        data = await self.__httpx_get_data(self.__url_news, query, headers)
+        if data is None:
+            logger.error("API::__get_sign_info error, data is None")
             return None
         return data
 

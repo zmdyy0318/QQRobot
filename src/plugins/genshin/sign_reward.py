@@ -1,6 +1,6 @@
 from src.common_utils.interface import IPluginBase
 from src.common_utils.database import Database
-from .api import API
+from src.common_utils.genshin_api import API
 from nonebot.log import logger
 
 
@@ -57,3 +57,6 @@ class SignReward(IPluginBase):
 
         message = message_sign
         return self.__sign_success % message
+
+    async def task(self, groups: list):
+        pass

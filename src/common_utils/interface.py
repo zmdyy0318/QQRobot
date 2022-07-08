@@ -28,5 +28,9 @@ class IPluginBase(metaclass=ABCMeta):
         return self.__help_text
 
     @abstractmethod
-    def handle(self, from_id: int, plain_text: str):
+    async def handle(self, from_id: int, plain_text: str):
+        pass
+
+    @abstractmethod
+    async def task(self, groups: list):
         pass

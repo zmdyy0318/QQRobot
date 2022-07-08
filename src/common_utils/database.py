@@ -1,7 +1,6 @@
 import pymysql
 from pydantic import BaseSettings
 
-import nonebot
 from nonebot.log import logger
 from nonebot import get_driver
 
