@@ -107,14 +107,14 @@ class Database:
         val = ""
         cursor = self.__db.cursor()
         try:
-            sql = "SELECT %s FROM %s WHERE %s = '%s';"
-            cursor.execute(sql % (col, self.__table_name, self.__table_key, key))
+            sql = "SELECT %s FROM %s WHERE %s = '%s';" % (col, self.__table_name, self.__table_key, key)
+            cursor.execute(sql)
             data = cursor.fetchone()
             if data is not None and len(data) > 0:
                 val = data[0]
             ret = True
         except (Exception,) as e:
-            logger.error("Database::get_value error, e={}", e)
+            logger.error("Database::get_value error, e={}, sql={}", e, sql)
             self.__last_error_msg = "数据库错误"
         cursor.close()
         return ret, val
