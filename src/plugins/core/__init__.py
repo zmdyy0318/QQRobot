@@ -35,7 +35,7 @@ for plugin_name in plugin_names:
         core_db.update_value(plugin_name, "group_id_list", "[]")
 
 
-core = on_startswith(plugin_keyword, priority=10)
+core = on_startswith(plugin_keyword, priority=1)
 
 
 @core.handle()

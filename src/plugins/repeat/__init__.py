@@ -29,7 +29,7 @@ class GroupInfo:
 
 
 group_map = {}
-repeat = on_message(priority=1)
+repeat = on_message(priority=10)
 
 
 @repeat.handle()

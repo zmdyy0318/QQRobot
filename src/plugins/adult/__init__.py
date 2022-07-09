@@ -35,19 +35,19 @@ bean_container.register(green)
 
 module_image = Image(bean_container)
 
-adult = on_message(priority=1)
+adult = on_message(priority=10)
 
 
 @adult.handle()
 async def handle(event: Event):
-    enable = await is_plugin_enable(event, core_db, plugin_name)
-    if enable is False:
-        return
     url_list = []
     for seg in event.get_message():
         if seg.type == "image":
             url_list.append(seg.data["url"])
     if len(url_list) == 0:
+        return
+    enable = await is_plugin_enable(event, core_db, plugin_name)
+    if enable is False:
         return
     handle_ret, score = await module_image.handle(url_list)
     if handle_ret is False or score < 0.5:

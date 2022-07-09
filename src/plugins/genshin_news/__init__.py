@@ -38,7 +38,7 @@ module_list = [
     FetchNews("获取资讯", "获取最新资讯", bean_container),
 ]
 
-genshin_news = on_startswith(plugin_keyword, priority=10)
+genshin_news = on_startswith(plugin_keyword, priority=1)
 
 
 @genshin_news.handle()

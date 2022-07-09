@@ -35,7 +35,7 @@ module_list = [
     SignReward("签到", "米游社每日签到", bean_container),
 ]
 
-genshin = on_startswith(plugin_keyword, priority=10)
+genshin = on_startswith(plugin_keyword, priority=1)
 
 
 @genshin.handle()
