@@ -6,7 +6,7 @@ from nonebot.adapters.onebot.v11 import Event
 from .config import Config
 
 from src.common_utils.database import Database
-from src.common_utils.system import BeanContainer, is_plugin_enable, get_enable_group
+from src.common_utils.system import BeanContainer, is_plugin_enable
 from src.common_utils.aliyun import Green
 from .image import Image
 
@@ -35,7 +35,7 @@ bean_container.register(green)
 
 module_image = Image(bean_container)
 
-adult = on_message()
+adult = on_message(priority=1)
 
 
 @adult.handle()
