@@ -13,6 +13,8 @@ class Image:
     async def handle(self, urls: list) -> (bool, float):
         large_url_list = []
         for url in urls:
+            if len(url) == 0:
+                continue
             ret, image_size = await self.__get_url_content_size(url)
             if ret is False:
                 continue
