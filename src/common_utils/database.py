@@ -76,6 +76,7 @@ class Database:
         try:
             sql = "SELECT 1 FROM %s WHERE %s = '%s';"
             cursor.execute(sql % (self.__table_name, self.__table_key, key))
+            self.__db.commit()
             data = cursor.fetchone()
             if data is not None and data[0] == 1:
                 exist = True
@@ -108,6 +109,7 @@ class Database:
         try:
             sql = "SELECT %s FROM %s WHERE %s = '%s';"
             cursor.execute(sql % (col, self.__table_name, self.__table_key, key))
+            self.__db.commit()
             data = cursor.fetchone()
             if data is not None and len(data) > 0:
                 val = data[0]
@@ -178,6 +180,7 @@ class Database:
               "WHERE table_schema = '%s' AND table_name = '%s' " \
               "LIMIT 1;"
         cursor.execute(sql % (self.__db_name, table_name))
+        self.__db.commit()
         data = cursor.fetchone()
         cursor.close()
         return data is not None
@@ -188,6 +191,7 @@ class Database:
               "WHERE table_schema = '%s' AND table_name = '%s' " \
               "LIMIT 1;"
         cursor.execute(sql % (self.__db_name, table_name))
+        self.__db.commit()
         data = cursor.fetchone()
         cursor.close()
         return data[0]
