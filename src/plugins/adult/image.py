@@ -22,6 +22,7 @@ class Image:
 
         green: Green = self.bean_container.get_bean(Green)
         ret, score = await green.get_image_score_by_url(large_url_list)
+        logger.info(f"Image::get_image_score_by_url ret: {ret}, score: {score}")
         return ret, score
 
     @staticmethod
