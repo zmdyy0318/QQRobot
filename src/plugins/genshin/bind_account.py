@@ -1,10 +1,10 @@
-from src.common_utils.interface import IPluginBase
+from src.common_utils.interface import IPluginTextBase
 from src.common_utils.database import Database
 from src.common_utils.genshin_api import API
 from nonebot.log import logger
 
 
-class BindAccount(IPluginBase):
+class BindAccount(IPluginTextBase):
     __bind_tip = "PC打开https://bbs.mihoyo.com/ys/登陆后,右键检查,选择控制台,粘贴以下代码,在弹出的窗口点确认,然后粘贴发送,绑定完毕记得撤回：\n" \
                  "var cookie=document.cookie;" \
                  "var Str_Num=cookie.indexOf('_MHYUUID=');" \

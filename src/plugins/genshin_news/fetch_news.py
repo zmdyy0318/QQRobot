@@ -1,14 +1,13 @@
 import nonebot
-from src.common_utils.interface import IPluginBase
+from src.common_utils.interface import IPluginTextBase
 from src.common_utils.genshin_api import API
 from src.common_utils.database import Database
 from src.common_utils.system import JsonUtil
 from nonebot.log import logger
 from nonebot.adapters.onebot.v11.message import Message, MessageSegment
-from httpx import AsyncClient
 
 
-class FetchNews(IPluginBase):
+class FetchNews(IPluginTextBase):
     __fetched_news = "获取新闻成功,%s"
     __fetch_fail = "获取新闻失败,%s"
     __bbs_url = "https://bbs.mihoyo.com/ys/article/"

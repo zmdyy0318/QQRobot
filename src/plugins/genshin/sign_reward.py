@@ -1,10 +1,10 @@
-from src.common_utils.interface import IPluginBase
+from src.common_utils.interface import IPluginTextBase
 from src.common_utils.database import Database
 from src.common_utils.genshin_api import API
 from nonebot.log import logger
 
 
-class SignReward(IPluginBase):
+class SignReward(IPluginTextBase):
     __sign_success = "签到成功,%s"
     __sign_fail = "签到失败,%s"
 

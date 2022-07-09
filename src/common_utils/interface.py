@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 from .system import BeanContainer
 
 
-class IPluginBase(metaclass=ABCMeta):
+class IPluginTextBase(metaclass=ABCMeta):
     __keyword: str
     __help_text: str
     bean_container: BeanContainer
