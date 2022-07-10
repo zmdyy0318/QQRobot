@@ -16,8 +16,10 @@ class Green:
         self.__clt = client.AcsClient(key_id, key_secret, region)
         return True
 
-    async def get_image_score_by_url(self, url: list) -> (bool, float):
-        return await self.__do_request(url)
+    async def get_image_score_by_url(self, urls: list) -> (bool, float):
+        if len(urls) == 0:
+            return False, 0.0
+        return await self.__do_request(urls)
 
     async def __do_request(self, url: list) -> (bool, float):
         request = ImageSyncScanRequest.ImageSyncScanRequest()
