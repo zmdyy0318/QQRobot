@@ -18,7 +18,7 @@ class Green:
 
     async def get_image_score_by_url(self, urls: list) -> (bool, float):
         if len(urls) == 0:
-            return False, 0.0
+            return True, 0.0
         return await self.__do_request(urls)
 
     async def __do_request(self, url: list) -> (bool, float):
