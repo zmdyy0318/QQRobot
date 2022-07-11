@@ -50,7 +50,7 @@ class FetchNews(IPluginTextBase):
         db: Database = self.bean_container.get_bean(Database)
         gs = API()
 
-        success, news = await gs.get_news(10, url_type)
+        success, news = await gs.get_news(15, url_type)
         if success is False:
             logger.error("FetchNews task get news error:%s" % gs.get_last_error_msg())
             return
@@ -104,15 +104,15 @@ class FetchNews(IPluginTextBase):
                 send_count += 1
 
             db_post_ids_list.sort()
-            if len(db_post_ids_list) > 30:
-                db_post_ids_list = db_post_ids_list[-30:]
+            if len(db_post_ids_list) > 45:
+                db_post_ids_list = db_post_ids_list[-45:]
             if send_count > 0:
                 ret = db.update_value(group, "post_ids", JsonUtil.list_to_json_str(db_post_ids_list))
                 if ret is False:
                     logger.error("FetchNews task update_value failed:%s" % db.get_last_error_msg())
                     continue
 
-            if 0 < send_count <= 8:
+            if 0 < send_count <= 12:
                 bot = nonebot.get_bot()
                 try:
                     await bot.send_group_msg(group_id=group, message=message)

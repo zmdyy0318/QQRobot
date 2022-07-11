@@ -60,7 +60,7 @@ async def is_plugin_enable(event: Event, core_db: Database, plugin_name: str, de
     if enable_val == 0:
         return False
 
-    if not isinstance(event, GroupMessageEvent):
+    if not hasattr(event, "group_id"):
         return True
 
     sender_group = event.group_id

@@ -49,15 +49,16 @@ async def handle(event: Event):
     for send_group_id in config.member_admin_groups:
         send_group_id = int(send_group_id)
         try:
+            message = ""
             if isinstance(event, GroupDecreaseNoticeEvent):
                 if event.sub_type == "kick":
-                    await member.send(f"成员变动:{user_id}({user_name})被"
-                                      f"{operator_id}({operator_name})踢出了{group_id}({group_name})")
+                    message = f"成员变动:{user_id}({user_name})被{operator_id}({operator_name})踢出了{group_id}({group_name})"
                 elif event.sub_type == "leave":
-                    await member.send(f"成员变动:{user_id}({user_name})离开了{group_id}({group_name})")
-
-            if isinstance(event, GroupIncreaseNoticeEvent):
-                await member.send(f"成员变动:{user_id}({user_name})加入了{group_id}({group_name})")
+                    message = f"成员变动:{user_id}({user_name})离开了{group_id}({group_name})"
+            elif isinstance(event, GroupIncreaseNoticeEvent):
+                message = f"成员变动:{user_id}({user_name})加入了{group_id}({group_name})"
+            if len(message) > 0:
+                await bot.send_group_msg(group_id=send_group_id, message=message)
         except (Exception,) as e:
             logger.error("member::send error, e={}, send_group_id={}", e, send_group_id)
 
