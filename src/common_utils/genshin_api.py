@@ -79,7 +79,7 @@ class API:
             self.__nickname = ret["nickname"]
             self.__level = ret["level"]
         except (Exception,) as e:
-            logger.error("API::init_user_role dict error, e: %s" % e)
+            logger.error(f"API::init_user_role dict error, e: {e}")
             self.__last_error_msg = "角色信息获取失败,请联系管理员"
             return False, None
 
@@ -104,7 +104,7 @@ class API:
             today: str = data_ret["today"]
             total_sign_day: int = data_ret["total_sign_day"]
         except (Exception,) as e:
-            logger.error("API::init_user_role dict error, e: %s" % e)
+            logger.error(f"API::init_user_role dict error, e: {e}")
             self.__last_error_msg = "签到信息获取失败,请联系管理员"
             return False, None
         return True, self.SignInfo(is_sign, sign_cnt_missed, today, total_sign_day)
@@ -127,7 +127,7 @@ class API:
                 cnt: int = award["cnt"]
 
         except (Exception,) as e:
-            logger.error("API::init_user_role dict error, e: %s" % e)
+            logger.error(f"API::init_user_role dict error, e: {e}")
             self.__last_error_msg = "签到信息获取失败,请联系管理员"
             return False, None
         return True, self.RewardsInfo(month, awards)
@@ -139,7 +139,7 @@ class API:
         try:
             code: str = data_ret["code"]
         except (Exception,) as e:
-            logger.error("API::init_user_role dict error, e: %s" % e)
+            logger.error(f"API::init_user_role dict error, e: {e}")
             self.__last_error_msg = "签到失败,请联系管理员"
             return False
         if code != "ok":
@@ -161,7 +161,7 @@ class API:
                 subject: str = new["post"]["subject"]
                 images: list = new["post"]["images"]
         except (Exception,) as e:
-            logger.error("API::init_user_role dict error, e: %s" % e)
+            logger.error(f"API::init_user_role dict error, e: {e}")
             self.__last_error_msg = "获取新闻失败,请联系管理员"
             return False, None
         return True, news_list
@@ -229,19 +229,19 @@ class API:
             async with AsyncClient() as client:
                 response = await client.get(url, params=params, headers=headers)
                 if response.status_code != 200:
-                    logger.error("API::__httpx_get_data server error, code: %s" % response.status_code)
+                    logger.error(f"API::__httpx_get_data server error, code: {response.status_code}")
                     self.__last_error_msg = "服务器错误,请稍后再试"
                     return None
                 json_ret = response.json()
                 if json_ret["retcode"] != 0:
-                    logger.error("API::__httpx_get_data ret code error, retcode:%s, msg: %s" % (json_ret["retcode"], json_ret["message"]))
+                    logger.error(f"API::__httpx_get_data ret code error, retcode:{json_ret['retcode']}, msg: {json_ret['message']}")
                     self.__last_error_msg = "返回错误,请检查cookie是否有效或重新绑定,错误内容: %s" % json_ret["message"]
                     return None
                 ret = json_ret["data"]
                 self.__last_error_msg = ""
                 return ret
         except (Exception,) as e:
-            logger.error("API::__httpx_get_data Exception error, e: %s" % e)
+            logger.error(f"API::__httpx_get_data Exception error, e: {e}")
             self.__last_error_msg = "未知错误,请联系管理员"
             return None
 
@@ -251,19 +251,20 @@ class API:
             async with AsyncClient() as client:
                 response = await client.post(url, params=params, json=body, headers=headers)
                 if response.status_code != 200:
-                    logger.error("API::__httpx_post_data server error, code: %s" % response.status_code)
+                    logger.error(f"API::__httpx_post_data server error, code: {response.status_code}")
                     self.__last_error_msg = "服务器错误,请稍后再试"
                     return None
                 json_ret = response.json()
                 if json_ret["retcode"] != 0:
-                    logger.error("API::__httpx_post_data ret code error, retcode:%s, msg: %s" % (json_ret["code"], json_ret["message"]))
+                    logger.error(f"API::__httpx_post_data ret code error, "
+                                 f"retcode:{json_ret['code']}, msg: {json_ret['message']}")
                     self.__last_error_msg = "返回错误,请检查cookie是否有效,错误内容: %s" % json_ret["message"]
                     return None
                 ret = json_ret["data"]
                 self.__last_error_msg = ""
                 return ret
         except (Exception,) as e:
-            logger.error("API::__httpx_post_data Exception error, e: %s" % e)
+            logger.error(f"API::__httpx_post_data Exception error, e: {e}")
             self.__last_error_msg = "未知错误,请联系管理员"
             return None
 

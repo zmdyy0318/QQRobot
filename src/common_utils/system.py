@@ -37,7 +37,7 @@ class JsonUtil:
         try:
             return True, json.loads(json_str)
         except (Exception,) as e:
-            logger.error("json_str_to_list error, e:{}", e)
+            logger.error(f"json_str_to_list error, e:{e}")
             return False, None
 
     @classmethod
@@ -49,7 +49,7 @@ class JsonUtil:
         try:
             return True, json.loads(json_str)
         except (Exception,) as e:
-            logger.error("json_str_to_dict error, e:{}", e)
+            logger.error(f"json_str_to_dict error, e:{e}")
             return False, None
 
 

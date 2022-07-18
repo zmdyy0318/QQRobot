@@ -35,15 +35,16 @@ class Database:
         try:
             self.__connect_db()
         except (Exception,) as e:
-            logger.error("Database::init_table connect error, e={}", e)
+            logger.error(f"Database::init_table connect error, e={e}")
             self.__last_error_msg = "数据库错误"
             return False
 
         try:
             self.__create_table(table_name, table_key, table_key_type, table_col)
-            self.__insert_col(table_name, table_col)
+            if len(table_col):
+                self.__insert_col(table_name, table_col)
         except (Exception,) as e:
-            logger.error("Database::init_table create or update table error, e={}", e)
+            logger.error(f"Database::init_table create or update table error, e={e}")
             self.__last_error_msg = "数据库错误"
             return False
         self.__table_name = table_name
@@ -60,7 +61,7 @@ class Database:
             self.__table_name = table_name
             return True
         except (Exception,) as e:
-            logger.error("Database::connect_table connect error, table_name={}, e={}", table_name, e)
+            logger.error(f"Database::connect_table connect error, table_name={table_name}, e={e}")
             self.__last_error_msg = "数据库错误"
             return False
 
@@ -82,7 +83,7 @@ class Database:
                 exist = True
             ret = True
         except (Exception,) as e:
-            logger.error("Database::is_key_exist error, e={}", e)
+            logger.error(f"Database::is_key_exist error, e={e}")
             self.__last_error_msg = "数据库错误"
         cursor.close()
         return ret, exist
@@ -95,7 +96,7 @@ class Database:
             cursor.execute(sql % (self.__table_name, self.__table_key, key))
             self.__db.commit()
         except (Exception,) as e:
-            logger.error("Database::insert_key error, e={}", e)
+            logger.error(f"Database::insert_key error, e={e}")
             self.__last_error_msg = "数据库错误"
             self.__db.rollback()
             ret = False
@@ -115,7 +116,7 @@ class Database:
                 val = data[0]
             ret = True
         except (Exception,) as e:
-            logger.error("Database::get_value error, e={}", e)
+            logger.error(f"Database::get_value error, e={e}")
             self.__last_error_msg = "数据库错误"
         cursor.close()
         return ret, val
@@ -128,7 +129,7 @@ class Database:
             cursor.execute(sql % (self.__table_name, col, val, self.__table_key, key))
             self.__db.commit()
         except (Exception,) as e:
-            logger.error("Database::update_value error, e={}", e)
+            logger.error(f"Database::update_value error, e={e}")
             self.__last_error_msg = "数据库错误"
             self.__db.rollback()
             ret = False
@@ -154,7 +155,7 @@ class Database:
         elif table_type == int:
             type_str = "INT"
         else:
-            raise Exception("Database::__create_table error, table_type={}", table_type)
+            raise Exception(f"Database::__create_table error, table_type={table_type}")
         cursor = self.__db.cursor()
         sql = "CREATE TABLE IF NOT EXISTS %s (%s %s PRIMARY KEY,"
         for key, value in table_col.items():

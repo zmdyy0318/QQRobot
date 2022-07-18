@@ -42,7 +42,7 @@ class Green:
             response = self.__clt.do_action_with_exception(request)
             json_res = json.loads(response)
             if json_res["code"] != 200:
-                logger.error("Green get_image_score_by_url failed:%s" % json_res["msg"])
+                logger.error(f"Green get_image_score_by_url failed:{json_res['msg']}")
                 return False, 0.0
             for data in json_res["data"]:
                 if data["code"] != 200:
@@ -63,6 +63,6 @@ class Green:
                     score_count += 1
                 return True, score_sum / score_count
         except Exception as e:
-            logger.error("Green do_action error, e:{}", e)
+            logger.error(f"Green do_action error, e:{e}")
             return False, 0.0
 

@@ -60,5 +60,5 @@ async def handle(event: Event):
             if len(message) > 0:
                 await bot.send_group_msg(group_id=send_group_id, message=message)
         except (Exception,) as e:
-            logger.error("member::send error, e={}, send_group_id={}", e, send_group_id)
+            logger.error(f"member::send error, e={e}, send_group_id={send_group_id}")
 

@@ -52,14 +52,14 @@ class FetchNews(IPluginTextBase):
 
         success, news = await gs.get_news(15, url_type)
         if success is False:
-            logger.error("FetchNews task get news error:%s" % gs.get_last_error_msg())
+            logger.error(f"FetchNews task get news error:{gs.get_last_error_msg()}")
             return
 
         for group in groups:
             group = int(group)
             ret, exist = db.is_key_exist(group)
             if ret is False:
-                logger.error("FetchNews task is_key_exist failed:%s" % db.get_last_error_msg())
+                logger.error(f"FetchNews task is_key_exist failed:{db.get_last_error_msg()}")
                 continue
             if exist is False:
                 db.insert_key(group)
@@ -68,19 +68,19 @@ class FetchNews(IPluginTextBase):
 
             ret, db_types_str = db.get_value(group, "types")
             if ret is False:
-                logger.error("FetchNews task get_value failed:%s" % db.get_last_error_msg())
+                logger.error(f"FetchNews task get_value failed:{db.get_last_error_msg()}")
                 continue
             ret, db_type_list = JsonUtil.json_str_to_list(db_types_str)
             if ret is False:
-                logger.error("FetchNews task json_str_to_list failed:%s" % db_types_str)
+                logger.error(f"FetchNews task json_str_to_list failed:{db_types_str}")
                 continue
             ret, db_post_ids_str = db.get_value(group, "post_ids")
             if ret is False:
-                logger.error("FetchNews task get_value failed:%s" % db.get_last_error_msg())
+                logger.error(f"FetchNews task get_value failed:{db.get_last_error_msg()}")
                 continue
             ret, db_post_ids_list = JsonUtil.json_str_to_list(db_post_ids_str)
             if ret is False:
-                logger.error("FetchNews task json_str_to_list failed:%s" % db_post_ids_str)
+                logger.error(f"FetchNews task json_str_to_list failed:{db_post_ids_str}")
                 continue
 
             if url_type not in db_type_list:
@@ -109,7 +109,7 @@ class FetchNews(IPluginTextBase):
             if send_count > 0:
                 ret = db.update_value(group, "post_ids", JsonUtil.list_to_json_str(db_post_ids_list))
                 if ret is False:
-                    logger.error("FetchNews task update_value failed:%s" % db.get_last_error_msg())
+                    logger.error(f"FetchNews task update_value failed:{db.get_last_error_msg()}")
                     continue
 
             if 0 < send_count <= 12:
@@ -117,7 +117,7 @@ class FetchNews(IPluginTextBase):
                 try:
                     await bot.send_group_msg(group_id=group, message=message)
                 except Exception as e:
-                    logger.error("FetchNews task send_group_msg error:%s, group:%s" % e, group)
+                    logger.error(f"FetchNews task send_group_msg error:{e}, group:{group}")
                     continue
 
     def get_url_type(self) -> int:

@@ -9,7 +9,7 @@ class SignReward(IPluginTextBase):
     __sign_fail = "签到失败,%s"
 
     async def handle(self, from_id: int, plain_text: str):
-        logger.info("SignReward handle from_id:%d plain_text:%s" % (from_id, plain_text))
+        logger.info(f"SignReward handle from_id:{from_id} plain_text:{plain_text}")
         db: Database = self.bean_container.get_bean(Database)
         ret, cookie = db.get_value(from_id, "cookie")
         if ret is False:
@@ -40,7 +40,7 @@ class SignReward(IPluginTextBase):
             item_name = rewards_info.awards[today]["name"]
             item_count = rewards_info.awards[today]["cnt"]
         except (Exception,) as e:
-            logger.error("SignReward rewards_info error, e:%s, today:%d" % (e, today))
+            logger.error(f"SignReward rewards_info error, e:{e}, today:{today}")
             return self.__sign_fail % "参数错误"
 
         message_sign = f"今日物品{item_name}x{item_count}\n" \

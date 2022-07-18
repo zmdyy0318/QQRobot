@@ -97,7 +97,7 @@ async def handle(event: Event):
                 try:
                     json_val: list = json.loads(group_id_list)
                 except (Exception,) as e:
-                    logger.error("{} handle error, e:{}", core, e)
+                    logger.error(f"{core} handle error, e:{e}")
                     await core.finish(fail_message % "json解析失败")
                     return
                 for group_id in json_val:
