@@ -23,3 +23,7 @@ RUN pip install --no-cache-dir --upgrade -r requirements.txt
 RUN rm requirements.txt
 
 COPY ./ /app/
+
+RUN pip install /app/3rdparty/ChatterBot-1.0.99a1-py2.py3-none-any.whl
+
+RUN spacy download zh_core_web_md
