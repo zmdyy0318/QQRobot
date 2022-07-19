@@ -8,7 +8,7 @@ import spacy
 
 
 class Language:
-    ISO_639_1 = 'zh_core_web_md'
+    ISO_639_1 = 'zh_core_web_sm'
 
 
 class MessageCache:
