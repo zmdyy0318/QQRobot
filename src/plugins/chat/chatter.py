@@ -19,31 +19,27 @@ class MessageCache:
 
 class Chatter:
     __bean_container: BeanContainer
-    __chatbot_list: dict
     __config: Config
     __message_cache: dict
     __default_interval: int
     __nlp = None
+    __chatbot = None
 
     def __init__(self, bean_container: BeanContainer):
         self.__bean_container = bean_container
         self.__config = bean_container.get_bean(Config)
-        self.__chatbot_list = {}
         self.__message_cache = {}
         self.__default_interval = 60 * 10
         self.__nlp = spacy.load(Language.ISO_639_1.lower())
+        success, bot = self.__create_bot(0)
+        if success is False:
+            raise Exception("create bot error")
+        self.__chatbot = bot
 
     async def handle(self, group_id: int, plain_text: str) -> (bool, str):
         if len(plain_text) == 0:
             return False, ""
 
-        if group_id not in self.__chatbot_list:
-            success, bot = self.__create_bot(group_id)
-            if success is False:
-                return False, ""
-            self.__chatbot_list[group_id] = bot
-
-        bot: ChatBot = self.__chatbot_list[group_id]
         if len(plain_text) <= 2:
             response = None
         else:
@@ -55,9 +51,9 @@ class Chatter:
             if count <= 2:
                 response = None
             else:
-                response = bot.get_response(plain_text)
+                response = self.__chatbot.get_response(plain_text)
 
-        self.__train_bot(bot, group_id)
+        self.__train_bot(self.__chatbot, group_id)
 
         if group_id not in self.__message_cache:
             message_cache = MessageCache()
