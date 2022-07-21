@@ -1,5 +1,6 @@
 import json
 import uuid
+import time
 from aliyunsdkcore import client
 from aliyunsdkgreen.request.v20180509 import ImageSyncScanRequest
 from aliyunsdkgreenextension.request.extension import HttpContentHelper
@@ -87,6 +88,8 @@ class Nlp:
     def get_nlp_info_by_text(self, text: str) -> (bool, list):
         if len(text) == 0:
             return True, []
+        # 防止频繁调用接口
+        time.sleep(0.1)
         return self.__do_request(text)
 
     def __do_request(self, text: str) -> (bool, list):

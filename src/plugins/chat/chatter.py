@@ -65,7 +65,7 @@ class Chatter:
                 message_cache.message.append(plain_text)
             message_cache.last_cache_time = int(time.time())
             if message_cache.next_interval > 10:
-                message_cache.next_interval = message_cache.next_interval - 20
+                message_cache.next_interval = message_cache.next_interval - 10
 
         if response is not None and 0.5 < response.confidence < 1 \
                 and int(time.time()) - message_cache.last_send_time > 60:
