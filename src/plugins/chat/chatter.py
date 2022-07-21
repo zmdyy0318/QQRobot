@@ -3,17 +3,16 @@ from nonebot.log import logger
 from chatterbot import ChatBot
 from chatterbot.trainers import ListTrainer
 from .config import Config
+from .tagging import CustomLemmaTagger
+from .attrs import STOP_WORDS
+from src.common_utils.aliyun import Nlp
 import time
-import spacy
-
-
-class Language:
-    ISO_639_1 = 'zh_core_web_sm'
 
 
 class MessageCache:
     message: list
-    last_time: int
+    last_cache_time: int
+    last_send_time: int
     next_interval: int
 
 
@@ -28,9 +27,10 @@ class Chatter:
     def __init__(self, bean_container: BeanContainer):
         self.__bean_container = bean_container
         self.__config = bean_container.get_bean(Config)
+        self.__nlp: Nlp = bean_container.get_bean(Nlp)
+        self.stop_word = STOP_WORDS
         self.__message_cache = {}
         self.__default_interval = 60 * 10
-        self.__nlp = spacy.load(Language.ISO_639_1.lower())
         success, bot = self.__create_bot(0)
         if success is False:
             raise Exception("create bot error")
@@ -40,36 +40,36 @@ class Chatter:
         if len(plain_text) == 0:
             return False, ""
 
-        if len(plain_text) <= 2:
-            response = None
-        else:
-            document = self.__nlp(plain_text)
-            count = 0
-            for token in document:
-                if token.is_alpha and not token.is_stop:
-                    count += 1
-            if count <= 2:
-                response = None
-            else:
-                response = self.__chatbot.get_response(plain_text)
+        response = None
+        if len(plain_text) > 2:
+            ret, document = self.__nlp.get_nlp_info_by_text(plain_text)
+            if ret is True:
+                tokens = [
+                    token for token in document if token.word.isalpha() and token.word not in self.stop_word
+                ]
+                if len(tokens) >= 2:
+                    response = self.__chatbot.get_response(plain_text)
 
         self.__train_bot(self.__chatbot, group_id)
 
         if group_id not in self.__message_cache:
             message_cache = MessageCache()
             message_cache.message = [plain_text]
-            message_cache.last_time = int(time.time())
+            message_cache.last_cache_time = int(time.time())
             message_cache.next_interval = self.__default_interval
+            message_cache.last_send_time = 0
             self.__message_cache[group_id] = message_cache
         else:
             message_cache = self.__message_cache[group_id]
             if len(message_cache.message) == 0 or message_cache.message[-1] != plain_text:
                 message_cache.message.append(plain_text)
-            message_cache.last_time = int(time.time())
+            message_cache.last_cache_time = int(time.time())
             if message_cache.next_interval > 10:
-                message_cache.next_interval = message_cache.next_interval - 10
+                message_cache.next_interval = message_cache.next_interval - 20
 
-        if response is not None and 0.5 <= response.confidence < 1:
+        if response is not None and 0.5 < response.confidence < 1 \
+                and int(time.time()) - message_cache.last_send_time > 60:
+            message_cache.last_send_time = int(time.time())
             return True, response.text
         return False, ""
 
@@ -84,8 +84,9 @@ class Chatter:
                 str(group_id),
                 storage_adapter="chatterbot.storage.SQLStorageAdapter",
                 database_uri=url,
-                tagger_language=Language,
                 default_response=["None"],
+                tagger=CustomLemmaTagger,
+                tagger_language=self.__nlp,
                 read_only=True
             )
             return True, chatbot
@@ -101,7 +102,7 @@ class Chatter:
             if len(message_cache.message) == 0:
                 return
             current_time = int(time.time())
-            if current_time - message_cache.last_time < message_cache.next_interval:
+            if current_time - message_cache.last_cache_time < message_cache.next_interval:
                 return
             if len(message_cache.message) == 1:
                 message_cache.message.clear()

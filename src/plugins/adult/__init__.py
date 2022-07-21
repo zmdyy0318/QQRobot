@@ -28,7 +28,7 @@ core_db = Database()
 if not core_db.connect_table("core"):
     raise Exception("connect core table error")
 green = Green()
-ret = green.init_access_key(config.cts_access_id, config.cts_access_key, config.cts_region)
+ret = green.init_access_key(config.ali_access_id, config.ali_access_key, config.ali_region_sh)
 if ret is False:
     raise Exception("init green init_access_key error")
 bean_container.register(green)

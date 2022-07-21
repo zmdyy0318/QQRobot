@@ -7,6 +7,7 @@ from .config import Config
 
 from src.common_utils.database import Database
 from src.common_utils.system import BeanContainer, is_plugin_enable
+from src.common_utils.aliyun import Nlp
 from .chatter import Chatter
 
 require('core')
@@ -27,6 +28,13 @@ core_db = Database()
 if not core_db.connect_table("core"):
     raise Exception("connect core table error")
 bean_container.register(config)
+
+nlp = Nlp()
+ret = nlp.init_access_key(config.ali_access_id, config.ali_access_key, config.ali_region_hz)
+if ret is False:
+    raise Exception("init nlp init_access_key error")
+bean_container.register(nlp)
+
 module_chatter = Chatter(bean_container)
 
 chat = on_message(priority=10)
