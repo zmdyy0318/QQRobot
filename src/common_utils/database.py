@@ -75,6 +75,7 @@ class Database:
         exist = False
         cursor = self.__db.cursor()
         try:
+            self.__db.ping()
             sql = "SELECT 1 FROM %s WHERE %s = '%s';"
             cursor.execute(sql % (self.__table_name, self.__table_key, key))
             self.__db.commit()
@@ -92,6 +93,7 @@ class Database:
         ret = True
         cursor = self.__db.cursor()
         try:
+            self.__db.ping()
             sql = "INSERT INTO %s (%s) VALUES ('%s');"
             cursor.execute(sql % (self.__table_name, self.__table_key, key))
             self.__db.commit()
@@ -108,6 +110,7 @@ class Database:
         val = ""
         cursor = self.__db.cursor()
         try:
+            self.__db.ping()
             sql = "SELECT %s FROM %s WHERE %s = '%s';"
             cursor.execute(sql % (col, self.__table_name, self.__table_key, key))
             self.__db.commit()
@@ -125,6 +128,7 @@ class Database:
         ret = True
         cursor = self.__db.cursor()
         try:
+            self.__db.ping()
             sql = "UPDATE %s SET %s = '%s' WHERE %s = '%s';"
             cursor.execute(sql % (self.__table_name, col, val, self.__table_key, key))
             self.__db.commit()
@@ -156,6 +160,7 @@ class Database:
             type_str = "INT"
         else:
             raise Exception(f"Database::__create_table error, table_type={table_type}")
+        self.__db.ping()
         cursor = self.__db.cursor()
         sql = "CREATE TABLE IF NOT EXISTS %s (%s %s PRIMARY KEY,"
         for key, value in table_col.items():
@@ -166,6 +171,7 @@ class Database:
         cursor.close()
 
     def __insert_col(self, table_name: str, table_col: dict) -> None:
+        self.__db.ping()
         cursor = self.__db.cursor()
         sql = "ALTER TABLE %s ADD COLUMN IF NOT EXISTS ("
         for key, value in table_col.items():
@@ -176,6 +182,7 @@ class Database:
         cursor.close()
 
     def __table_exist(self, table_name: str) -> bool:
+        self.__db.ping()
         cursor = self.__db.cursor()
         sql = "SELECT * FROM information_schema.tables " \
               "WHERE table_schema = '%s' AND table_name = '%s' " \
@@ -187,6 +194,7 @@ class Database:
         return data is not None
 
     def __select_table_key(self, table_name: str) -> str:
+        self.__db.ping()
         cursor = self.__db.cursor()
         sql = "SELECT COLUMN_NAME FROM information_schema.KEY_COLUMN_USAGE " \
               "WHERE table_schema = '%s' AND table_name = '%s' " \
