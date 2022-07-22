@@ -18,8 +18,8 @@ class Image:
             ret, image_size = await self.__get_url_content_size(url)
             if ret is False:
                 continue
-            # 50kb以下的图片不计算
-            if image_size > 1024 * 50:
+            # 10kb以下的图片不计算
+            if image_size > 1024 * 10:
                 large_url_list.append(url)
 
         green: Green = self.__bean_container.get_bean(Green)
