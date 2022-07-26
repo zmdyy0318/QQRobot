@@ -70,6 +70,7 @@ class Chatter:
         if response is not None and 0.5 < response.confidence < 1 \
                 and int(time.time()) - message_cache.last_send_time > 60:
             message_cache.last_send_time = int(time.time())
+            message_cache.message.append(response.text)
             return True, response.text
         return False, ""
 
