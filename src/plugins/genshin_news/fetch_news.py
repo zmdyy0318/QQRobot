@@ -104,8 +104,8 @@ class FetchNews(IPluginTextBase):
                 send_count += 1
 
             db_post_ids_list.sort()
-            if len(db_post_ids_list) > 45:
-                db_post_ids_list = db_post_ids_list[-45:]
+            if len(db_post_ids_list) > 60:
+                db_post_ids_list = db_post_ids_list[-60:]
             if send_count > 0:
                 ret = db.update_value(group, "post_ids", JsonUtil.list_to_json_str(db_post_ids_list))
                 if ret is False:
