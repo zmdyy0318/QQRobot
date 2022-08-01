@@ -31,9 +31,10 @@ class Database:
         if self.__db:
             self.__db.close()
 
-    def init_table(self, table_name: str, table_key: str, table_key_type: type, table_col: dict) -> bool:
+    def init_table(self, table_name: str, table_key: str, table_key_type: type, table_col: dict,
+                   database_name: str = "") -> bool:
         try:
-            self.__connect_db()
+            self.__connect_db(database_name)
         except (Exception,) as e:
             logger.error(f"Database::init_table connect error, e={e}")
             self.__last_error_msg = "数据库错误"
@@ -51,10 +52,9 @@ class Database:
         self.__table_key = table_key
         return True
 
-    def connect_table(self, table_name: str):
-        ret = False
+    def connect_table(self, table_name: str, database_name: str = ""):
         try:
-            self.__connect_db()
+            self.__connect_db(database_name)
             if self.__table_exist(table_name) is False:
                 return False
             self.__table_key = self.__select_table_key(table_name)
@@ -140,12 +140,31 @@ class Database:
         cursor.close()
         return ret
 
-    def __connect_db(self) -> None:
+    def delete_value(self, col: str, val: Union[str, int]) -> bool:
+        ret = True
+        cursor = self.__db.cursor()
+        try:
+            self.__db.ping()
+            sql = "DELETE FROM %s WHERE %s = '%s';"
+            cursor.execute(sql % (self.__table_name, col, val))
+            self.__db.commit()
+        except (Exception,) as e:
+            logger.error(f"Database::delete_value error, e={e}")
+            self.__last_error_msg = "数据库错误"
+            self.__db.rollback()
+            ret = False
+        cursor.close()
+        return ret
+
+    def __connect_db(self, database_name: str) -> None:
         global_config = get_driver().config
         config = Config.parse_obj(global_config)
         host = config.maria_host
         port = int(config.maria_port)
-        database = config.maria_database
+        if database_name == "":
+            database = config.maria_database
+        else:
+            database = database_name
         user = config.maria_user
         password = config.maria_password
         self.__db = pymysql.connect(host=host, port=port,

@@ -16,14 +16,6 @@ global_config = get_driver().config
 config = Config.parse_obj(global_config)
 plugin_name = "adult"
 
-data_base_col = {
-    "count": "int",
-}
-adult_db = Database()
-if not adult_db.init_table(table_name=plugin_name, table_key="id", table_key_type=int, table_col=data_base_col):
-    raise Exception("init adult_db table error")
-bean_container = BeanContainer()
-bean_container.register(adult_db)
 core_db = Database()
 if not core_db.connect_table("core"):
     raise Exception("connect core table error")
@@ -31,6 +23,7 @@ green = Green()
 ret = green.init_access_key(config.ali_access_id, config.ali_access_key, config.ali_region_sh)
 if ret is False:
     raise Exception("init green init_access_key error")
+bean_container = BeanContainer()
 bean_container.register(green)
 
 module_image = Image(bean_container)
