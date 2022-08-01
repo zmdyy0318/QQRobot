@@ -137,12 +137,12 @@ class API:
         if data_ret is None:
             return False
         try:
-            code: str = data_ret["code"]
+            code: int = data_ret["success"]
         except (Exception,) as e:
             logger.error(f"API::init_user_role dict error, e: {e}")
             self.__last_error_msg = "签到失败,请联系管理员"
             return False
-        if code != "ok":
+        if code != 0:
             return False
         return True
 
