@@ -1,6 +1,7 @@
 from nonebot import require
 from nonebot import get_driver
 from nonebot import on_message
+from nonebot.log import logger
 from nonebot.adapters.onebot.v11 import Event, GroupMessageEvent
 
 from .config import Config
@@ -45,6 +46,15 @@ async def handle(event: Event):
     if not isinstance(event, GroupMessageEvent):
         return
 
+    if event.reply is not None:
+        logger.warning(f"reply "
+                       f"sender_group:{event.group_id} "
+                       f"sender_id:{event.reply.sender.user_id} "
+                       f"self_id:{event.self_id} "
+                       f"text:{text}")
+    else:
+        logger.warning(f"text:{text} is not reply")
+
     if event.reply is not None \
             and event.reply.sender.user_id == event.self_id \
             and text == "不可以":
@@ -52,7 +62,7 @@ async def handle(event: Event):
         if remove_ret is False:
             await chat.send("我错了下次还敢")
         else:
-            await chat.send("我错了")
+            await chat.send("我错了下次不敢")
     else:
         handle_ret, reply_text = await module_chatter.handle(event.group_id, text)
         if handle_ret is False or len(reply_text) == 0:
