@@ -1,7 +1,6 @@
 from nonebot import require
 from nonebot import get_driver
 from nonebot import on_message
-from nonebot.log import logger
 from nonebot.adapters.onebot.v11 import Event, GroupMessageEvent
 
 from .config import Config
@@ -45,15 +44,6 @@ async def handle(event: Event):
 
     if not isinstance(event, GroupMessageEvent):
         return
-
-    if event.reply is not None:
-        logger.warning(f"reply "
-                       f"sender_group:{event.group_id} "
-                       f"sender_id:{event.reply.sender.user_id} "
-                       f"self_id:{event.self_id} "
-                       f"text:{text}")
-    else:
-        logger.warning(f"text:{text} is not reply")
 
     if event.reply is not None \
             and event.reply.sender.user_id == event.self_id \
