@@ -57,9 +57,9 @@ class FetchNews(IPluginTextBase):
 
         for group in groups:
             group = int(group)
-            ret, exist = db.is_value_exist(group)
+            ret, exist = db.is_key_exist(group)
             if ret is False:
-                logger.error(f"FetchNews task is_value_exist failed:{db.get_last_error_msg()}")
+                logger.error(f"FetchNews task is_key_exist failed:{db.get_last_error_msg()}")
                 continue
             if exist is False:
                 db.insert_key(group)

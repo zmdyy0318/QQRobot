@@ -48,17 +48,9 @@ async def handle(event: Event):
     if event.reply is not None \
             and event.reply.sender.user_id == event.self_id \
             and text == "不可以":
-        search_text = event.reply.message.extract_plain_text()
-        db_ret, exist = await module_chatter.reply_exist(search_text)
-        if db_ret is False:
-            await chat.send("下次还敢")
-            return
-        if exist is False:
-            await chat.send("不是我说的")
-            return
-        remove_ret = await module_chatter.reply_delete(search_text)
+        remove_ret = await module_chatter.delete_reply(event.reply.message.extract_plain_text())
         if remove_ret is False:
-            await chat.send("下次还敢")
+            await chat.send("我错了下次还敢")
         else:
             await chat.send("我错了下次不敢")
     else:

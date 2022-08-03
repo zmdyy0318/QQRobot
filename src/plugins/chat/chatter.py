@@ -41,10 +41,7 @@ class Chatter:
         if not self.__statement_db.connect_table("statement", self.__config.maria_chat_database):
             raise Exception("connect statement table error")
 
-    async def reply_exist(self, plain_text: str) -> bool:
-        return self.__statement_db.exist_value("text", plain_text)
-
-    async def reply_delete(self, plain_text: str) -> bool:
+    async def delete_reply(self, plain_text: str) -> bool:
         return self.__statement_db.delete_value("text", plain_text)
 
     async def handle(self, group_id: int, plain_text: str) -> (bool, str):
