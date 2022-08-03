@@ -25,7 +25,7 @@ class BindAccount(IPluginTextBase):
             return self.__bind_fail % gs.get_last_error_msg()
 
         db: Database = self.bean_container.get_bean(Database)
-        ret, exist = db.is_key_exist(from_id)
+        ret, exist = db.is_value_exist(from_id)
         if ret is False:
             return self.__bind_fail % db.get_last_error_msg()
 

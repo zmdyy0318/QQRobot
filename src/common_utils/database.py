@@ -70,7 +70,7 @@ class Database:
         self.__last_error_msg = ""
         return error_msg
 
-    def is_key_exist(self, key: Union[str, int]) -> (bool, bool):
+    def is_value_exist(self, key: Union[str, int]) -> (bool, bool):
         ret = False
         exist = False
         cursor = self.__db.cursor()
@@ -84,7 +84,7 @@ class Database:
                 exist = True
             ret = True
         except (Exception,) as e:
-            logger.error(f"Database::is_key_exist error, e={e}")
+            logger.error(f"Database::is_value_exist error, e={e}")
             self.__last_error_msg = "数据库错误"
         cursor.close()
         return ret, exist

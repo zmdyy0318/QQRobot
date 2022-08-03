@@ -26,7 +26,7 @@ if not core_db.init_table(table_name=plugin_name, table_key="name", table_key_ty
     raise Exception("init core table error")
 plugin_names = config.plugin_names
 for plugin_name in plugin_names:
-    success, exist = core_db.is_key_exist(plugin_name)
+    success, exist = core_db.is_value_exist(plugin_name)
     if not success:
         raise Exception("init core key error")
     if not exist:
