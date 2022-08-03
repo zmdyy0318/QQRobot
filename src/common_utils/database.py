@@ -89,6 +89,25 @@ class Database:
         cursor.close()
         return ret, exist
 
+    def is_value_exist(self, col: str, value: Union[str, int]) -> (bool, bool):
+        ret = False
+        exist = False
+        cursor = self.__db.cursor()
+        try:
+            self.__db.ping()
+            sql = "SELECT 1 FROM %s WHERE %s = '%s';"
+            cursor.execute(sql % (self.__table_name, col, value))
+            self.__db.commit()
+            data = cursor.fetchone()
+            if data is not None and data[0] == 1:
+                exist = True
+            ret = True
+        except (Exception,) as e:
+            logger.error(f"Database::is_value_exist error, e={e}")
+            self.__last_error_msg = "数据库错误"
+        cursor.close()
+        return ret, exist
+
     def insert_key(self, key: Union[str, int]) -> bool:
         ret = True
         cursor = self.__db.cursor()
