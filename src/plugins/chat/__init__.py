@@ -22,10 +22,7 @@ if not core_db.connect_table("core"):
 bean_container = BeanContainer()
 bean_container.register(config)
 
-nlp = Nlp()
-ret = nlp.init_access_key(config.ali_access_id, config.ali_access_key, config.ali_region_hz)
-if ret is False:
-    raise Exception("init nlp init_access_key error")
+nlp = Nlp(config.ali_access_id, config.ali_access_key, config.ali_region_hz)
 bean_container.register(nlp)
 
 module_chatter = Chatter(bean_container)

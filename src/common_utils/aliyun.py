@@ -1,23 +1,41 @@
 import json
 import uuid
 import time
+from abc import ABCMeta
 from aliyunsdkcore import client
 from aliyunsdkgreen.request.v20180509 import ImageSyncScanRequest
 from aliyunsdkgreenextension.request.extension import HttpContentHelper
 from aliyunsdkalinlp.request.v20200629 import GetPosChGeneralRequest
+from alibabacloud_tea_openapi import models as open_api_models
+from alibabacloud_ocr_api20210707.client import Client as OcrClient
+from alibabacloud_ocr_api20210707 import models as OcrModels
 from nonebot.log import logger
 
 
-class Green:
-    __access_key_id: str
-    __access_key_secret: str
-    __region: str
+class ICore(metaclass=ABCMeta):
     __clt = None
+    __config = None
+    __region = None
 
-    def init_access_key(self, key_id: str, key_secret: str, region: str) -> bool:
+    def __init__(self, key_id: str, key_secret: str, region: str):
         self.__clt = client.AcsClient(key_id, key_secret, region)
-        return True
+        self.__region = region
+        self.__config = open_api_models.Config(
+            access_key_id=key_id,
+            access_key_secret=key_secret
+        )
 
+    def get_clt(self):
+        return self.__clt
+
+    def get_config(self):
+        return self.__config
+
+    def get_region(self):
+        return self.__region
+
+
+class Green(ICore):
     def get_image_score_by_url(self, urls: list) -> (bool, float):
         if len(urls) == 0:
             return True, 0.0
@@ -41,7 +59,8 @@ class Green:
         score_sum = 0.0
         score_count = 0
         try:
-            response = self.__clt.do_action_with_exception(request)
+            clt: client.AcsClient = self.get_clt()
+            response = clt.do_action_with_exception(request)
             json_res = json.loads(response)
             if json_res["code"] != 200:
                 logger.error(f"Green do_action_with_exception failed:{json_res['msg']}")
@@ -75,16 +94,7 @@ class NlpInfo:
         self.word = word
 
 
-class Nlp:
-    __access_key_id: str
-    __access_key_secret: str
-    __region: str
-    __clt = None
-
-    def init_access_key(self, key_id: str, key_secret: str, region: str) -> bool:
-        self.__clt = client.AcsClient(key_id, key_secret, region)
-        return True
-
+class Nlp(ICore):
     def get_nlp_info_by_text(self, text: str) -> (bool, list):
         if len(text) == 0:
             return True, []
@@ -102,7 +112,8 @@ class Nlp:
 
     def __do_action(self, request: GetPosChGeneralRequest) -> (bool, list):
         try:
-            response = self.__clt.do_action_with_exception(request)
+            clt: client.AcsClient = self.get_clt()
+            response = clt.do_action_with_exception(request)
             json_res = json.loads(response)
             if not json_res:
                 logger.error(f"Nlp do_action_with_exception failed")
@@ -117,3 +128,56 @@ class Nlp:
         except Exception as e:
             logger.error(f"Nlp do_action error, e:{e}")
             return False, []
+
+
+class OcrInfo:
+    def __init__(self, text: str):
+        self.text = text
+        self.pos0 = [0, 0]
+        self.pos1 = [0, 0]
+        self.pos2 = [0, 0]
+        self.pos3 = [0, 0]
+
+
+class Ocr(ICore):
+    def get_ocr_info_by_url(self, url: str) -> (bool, list):
+        if len(url) == 0:
+            return True, []
+        return self.__do_request(url)
+
+    def get_clt(self):
+        config = self.get_config()
+        config.endpoint = f"ocr-api.{self.get_region()}.aliyuncs.com"
+        return OcrClient(config)
+
+    def __do_request(self, url: str) -> (bool, list):
+        request = OcrModels.RecognizeBasicRequest(
+            url=url,
+        )
+        return self.__do_action(request)
+
+    def __do_action(self, request) -> (bool, list):
+        try:
+            clt: OcrClient = self.get_clt()
+            response = clt.recognize_basic(request)
+            if response.status_code != 200:
+                logger.error(f"Ocr __do_action recognize_basic failed, status_code:{response.status_code}")
+                return False, []
+            json_res = json.loads(response.body.data)
+            if not json_res:
+                logger.error(f"Ocr __do_action json.loads failed")
+                return False, []
+            words_list = json_res["prism_wordsInfo"]
+            ret = []
+            for word in words_list:
+                info = OcrInfo(word["word"])
+                info.pos0 = [word["pos"][0]["x"], word["pos"][0]["y"]]
+                info.pos1 = [word["pos"][1]["x"], word["pos"][1]["y"]]
+                info.pos2 = [word["pos"][2]["x"], word["pos"][2]["y"]]
+                info.pos3 = [word["pos"][3]["x"], word["pos"][3]["y"]]
+                ret.append(info)
+            return True, ret
+        except Exception as e:
+            logger.error(f"Ocr do_action error, e:{e}")
+            return False, []
+

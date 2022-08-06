@@ -76,7 +76,7 @@ class Database:
         cursor = self.__db.cursor()
         try:
             self.__db.ping()
-            sql = "SELECT 1 FROM %s WHERE %s = '%s';"
+            sql = "SELECT 1 FROM `%s` WHERE `%s` = '%s';"
             cursor.execute(sql % (self.__table_name, self.__table_key, key))
             self.__db.commit()
             data = cursor.fetchone()
@@ -95,7 +95,7 @@ class Database:
         cursor = self.__db.cursor()
         try:
             self.__db.ping()
-            sql = "SELECT 1 FROM %s WHERE %s = '%s';"
+            sql = "SELECT 1 FROM `%s` WHERE `%s` = '%s';"
             cursor.execute(sql % (self.__table_name, col, value))
             self.__db.commit()
             data = cursor.fetchone()
@@ -113,7 +113,7 @@ class Database:
         cursor = self.__db.cursor()
         try:
             self.__db.ping()
-            sql = "INSERT INTO %s (%s) VALUES ('%s');"
+            sql = "INSERT INTO `%s` (`%s`) VALUES ('%s');"
             cursor.execute(sql % (self.__table_name, self.__table_key, key))
             self.__db.commit()
         except (Exception,) as e:
@@ -130,7 +130,7 @@ class Database:
         cursor = self.__db.cursor()
         try:
             self.__db.ping()
-            sql = "SELECT %s FROM %s WHERE %s = '%s';"
+            sql = "SELECT `%s` FROM `%s` WHERE `%s` = '%s';"
             cursor.execute(sql % (col, self.__table_name, self.__table_key, key))
             self.__db.commit()
             data = cursor.fetchone()
@@ -148,7 +148,7 @@ class Database:
         cursor = self.__db.cursor()
         try:
             self.__db.ping()
-            sql = "UPDATE %s SET %s = '%s' WHERE %s = '%s';"
+            sql = "UPDATE `%s` SET `%s` = '%s' WHERE `%s` = '%s';"
             cursor.execute(sql % (self.__table_name, col, val, self.__table_key, key))
             self.__db.commit()
         except (Exception,) as e:
@@ -164,7 +164,7 @@ class Database:
         cursor = self.__db.cursor()
         try:
             self.__db.ping()
-            sql = "DELETE FROM %s WHERE %s = '%s';"
+            sql = "DELETE FROM `%s` WHERE `%s` = '%s';"
             cursor.execute(sql % (self.__table_name, col, val))
             self.__db.commit()
         except (Exception,) as e:
@@ -200,9 +200,9 @@ class Database:
             raise Exception(f"Database::__create_table error, table_type={table_type}")
         self.__db.ping()
         cursor = self.__db.cursor()
-        sql = "CREATE TABLE IF NOT EXISTS %s (%s %s PRIMARY KEY,"
+        sql = "CREATE TABLE IF NOT EXISTS `%s` (`%s` %s PRIMARY KEY,"
         for key, value in table_col.items():
-            sql += "%s %s," % (key, value)
+            sql += "`%s` %s," % (key, value)
         sql = sql.rstrip(",")
         sql += ");"
         cursor.execute(sql % (table_name, table_key, type_str))
@@ -211,9 +211,9 @@ class Database:
     def __insert_col(self, table_name: str, table_col: dict) -> None:
         self.__db.ping()
         cursor = self.__db.cursor()
-        sql = "ALTER TABLE %s ADD COLUMN IF NOT EXISTS ("
+        sql = "ALTER TABLE `%s` ADD COLUMN IF NOT EXISTS ("
         for key, value in table_col.items():
-            sql += "%s %s," % (key, value)
+            sql += "`%s` %s," % (key, value)
         sql = sql.rstrip(",")
         sql += ");"
         cursor.execute(sql % table_name)

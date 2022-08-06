@@ -81,7 +81,8 @@ class Chatter:
         if response is not None and 0.5 < response.confidence < 1 \
                 and int(time.time()) - message_cache.last_send_time > 60:
             message_cache.last_send_time = int(time.time())
-            message_cache.message.append(response.text)
+            # 删除回复后学习队列仍然存在
+            # message_cache.message.append(response.text)
             return True, response.text
         return False, ""
 
