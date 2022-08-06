@@ -167,6 +167,9 @@ class Ocr(ICore):
             if not json_res:
                 logger.error(f"Ocr __do_action json.loads failed")
                 return False, []
+            num = json_res["prism_wnum"]
+            if num == 0:
+                return True, []
             words_list = json_res["prism_wordsInfo"]
             ret = []
             for word in words_list:
