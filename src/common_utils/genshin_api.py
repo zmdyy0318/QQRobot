@@ -174,20 +174,20 @@ class API:
     @staticmethod
     def __generate_230_headers(cookie: str, with_ds: bool = False):
         ua = "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) " \
-             "AppleWebKit/605.1.15 (KHTML, like Gecko) miHoYoBBS/2.3.0"
+             "AppleWebKit/605.1.15 (KHTML, like Gecko) miHoYoBBS/2.34.1"
         headers = {
             "User-Agent": ua,
             "Referer": "https://webstatic.mihoyo.com/",
             "Cookie": cookie
         }
         if with_ds:
-            n = 'h8w582wxwgqvahcdkpvdhbh2w9casgfl'
+            n = '9nQiU3AV0rJSIBWgdynfoGMGKaklfbM7'
             i = int(time.time())
             r = ''.join(random.sample(string.ascii_lowercase + string.digits, 6))
             d = "salt=%s&t=%d&r=%s" % (n, i, r)
             c = hashlib.md5(d.encode(encoding="UTF-8")).hexdigest()
             headers["DS"] = "%s,%s,%s" % (i, r, c)
-            headers["x-rpc-app_version"] = "2.3.0"
+            headers["x-rpc-app_version"] = "2.34.1"
             headers["x-rpc-client_type"] = "5"
             headers["x-rpc-device_id"] = str(uuid.uuid3(uuid.NAMESPACE_URL, ua)).replace('-', '').upper()
         return headers
@@ -195,7 +195,7 @@ class API:
     @staticmethod
     def __generate_211_headers(cookie: str, with_ds: bool = False, query: dict = {}, body: str = ""):
         ua = "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) " \
-             "AppleWebKit/605.1.15 (KHTML, like Gecko) miHoYoBBS/2.11.1"
+             "AppleWebKit/605.1.15 (KHTML, like Gecko) miHoYoBBS/2.34.1"
         headers = {
             "User-Agent": ua,
             "Referer": "https://webstatic.mihoyo.com/",
@@ -209,7 +209,7 @@ class API:
             d = "salt=%s&t=%d&r=%s&b=%s&q=%s" % (n, i, r, body, q)
             c = hashlib.md5(d.encode(encoding="UTF-8")).hexdigest()
             headers["DS"] = "%s,%s,%s" % (i, r, c)
-            headers["x-rpc-app_version"] = "2.3.0"
+            headers["x-rpc-app_version"] = "2.34.1"
             headers["x-rpc-client_type"] = "5"
             headers["x-rpc-device_id"] = str(uuid.uuid3(uuid.NAMESPACE_URL, ua)).replace('-', '').upper()
         return headers
@@ -257,7 +257,7 @@ class API:
                 json_ret = response.json()
                 if json_ret["retcode"] != 0:
                     logger.error(f"API::__httpx_post_data ret code error, "
-                                 f"retcode:{json_ret['code']}, msg: {json_ret['message']}")
+                                 f"msg: {json_ret['message']}")
                     self.__last_error_msg = "返回错误,请检查cookie是否有效,错误内容: %s" % json_ret["message"]
                     return None
                 ret = json_ret["data"]
@@ -304,7 +304,7 @@ class API:
 
     async def __get_rewards_info(self):
         if self.__is_login is False:
-            logger.error("API::__get_sign_info error, not login")
+            logger.error("API::__get_rewards_info error, not login")
             self.__last_error_msg = "未登录,请绑定cookie"
             return None
 
@@ -314,7 +314,7 @@ class API:
         headers = self.__generate_211_headers(self.__cookie)
         data = await self.__httpx_get_data(self.__url_rewards_info, query, headers)
         if data is None:
-            logger.error("API::__get_sign_info error, data is None")
+            logger.error("API::__get_rewards_info error, data is None")
             return None
         return data
 
@@ -345,7 +345,7 @@ class API:
         headers = self.__generate_211_headers("")
         data = await self.__httpx_get_data(self.__url_news, query, headers)
         if data is None:
-            logger.error("API::__get_sign_info error, data is None")
+            logger.error("API::__get_news error, data is None")
             return None
         return data
 

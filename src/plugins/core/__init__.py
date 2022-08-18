@@ -4,8 +4,8 @@ from nonebot import on_startswith
 from nonebot.adapters.onebot.v11 import Event, GroupMessageEvent
 from nonebot.log import logger
 from .config import Config
+from .core import GlobalCore
 
-from src.common_utils.database import Database
 from src.common_utils.system import JsonUtil
 
 global_config = get_driver().config
@@ -16,23 +16,10 @@ if global_config.environment == "dev":
     plugin_keyword = "/" + plugin_keyword
 
 
-data_base_col = {
-    "enable": "int",
-    "group_id_list": "text"
-}
-
-core_db = Database()
-if not core_db.init_table(table_name=plugin_name, table_key="name", table_key_type=str, table_col=data_base_col):
-    raise Exception("init core table error")
 plugin_names = config.plugin_names
-for plugin_name in plugin_names:
-    success, exist = core_db.is_key_exist(plugin_name)
-    if not success:
-        raise Exception("init core key error")
-    if not exist:
-        core_db.insert_key(plugin_name)
-        core_db.update_value(plugin_name, "enable", 1)
-        core_db.update_value(plugin_name, "group_id_list", "[]")
+global_core = GlobalCore()
+global_core.init_core_db(config.plugin_names)
+core_db = global_core.get_core_db()
 
 
 core = on_startswith(plugin_keyword, priority=1)

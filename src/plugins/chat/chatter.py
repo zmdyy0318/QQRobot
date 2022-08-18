@@ -1,12 +1,14 @@
 from src.common_utils.system import BeanContainer
+from src.common_utils.aliyun import Nlp
+from src.common_utils.database import Database
+from src.common_utils.interface import IPluginBase
 from nonebot.log import logger
+from nonebot.adapters.onebot.v11 import GroupMessageEvent
 from chatterbot import ChatBot
 from chatterbot.trainers import ListTrainer
 from .config import Config
 from .tagging import CustomLemmaTagger
 from .attrs import STOP_WORDS
-from src.common_utils.aliyun import Nlp
-from src.common_utils.database import Database
 import time
 
 
@@ -17,19 +19,18 @@ class MessageCache:
     next_interval: int
 
 
-class Chatter:
-    __bean_container: BeanContainer
+class Chatter(IPluginBase):
     __config: Config
     __message_cache: dict
     __default_interval: int
     __nlp = None
     __chatbot = None
+    __stop_words = STOP_WORDS
+    __statement_db: Database()
 
-    def __init__(self, bean_container: BeanContainer):
-        self.__bean_container = bean_container
-        self.__config = bean_container.get_bean(Config)
-        self.__nlp: Nlp = bean_container.get_bean(Nlp)
-        self.stop_word = STOP_WORDS
+    def init_module(self):
+        self.__config = self.bean_container.get_bean(Config)
+        self.__nlp: Nlp = self.bean_container.get_bean(Nlp)
         self.__message_cache = {}
         self.__default_interval = 60 * 10
         success, bot = self.__create_bot(0)
@@ -41,13 +42,34 @@ class Chatter:
         if not self.__statement_db.connect_table("statement", self.__config.maria_chat_database):
             raise Exception("connect statement table error")
 
-    async def reply_exist(self, plain_text: str) -> (bool, bool):
-        return self.__statement_db.is_value_exist("text", plain_text)
+    async def handle_event(self, event: GroupMessageEvent):
+        plain_text = event.get_plaintext()
+        if len(plain_text) == 0 or plain_text.strip() == "":
+            return
+        if event.reply is not None \
+                and event.reply.sender.user_id == event.self_id \
+                and plain_text == "不可以":
+            search_text = event.reply.message.extract_plain_text()
+            db_ret, exist = self.__statement_db.is_value_exist("text", search_text)
+            if db_ret is False:
+                return "下次还敢"
+            if exist is False:
+                return "不是我说的"
+            remove_ret = self.__statement_db.delete_value("text", search_text)
+            if remove_ret is False:
+                return "下次还敢"
+            else:
+                return "我错了"
+        else:
+            handle_ret, reply_text = self.__process_chat(event.group_id, plain_text)
+            if handle_ret is False or len(reply_text) == 0:
+                return None
+            return reply_text
 
-    async def reply_delete(self, plain_text: str) -> bool:
-        return self.__statement_db.delete_value("text", plain_text)
+    async def task(self, groups: list):
+        pass
 
-    async def handle(self, group_id: int, plain_text: str) -> (bool, str):
+    def __process_chat(self, group_id: int, plain_text: str) -> (bool, str):
         if len(plain_text) == 0:
             return False, ""
 
@@ -131,3 +153,4 @@ class Chatter:
             message_cache.message.clear()
             message_cache.next_interval = self.__default_interval
             return
+

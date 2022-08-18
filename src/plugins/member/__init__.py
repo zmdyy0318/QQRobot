@@ -6,30 +6,26 @@ from nonebot.adapters.onebot.v11 import Event, GroupDecreaseNoticeEvent, GroupIn
 from nonebot.log import logger
 from .config import Config
 
-from src.common_utils.database import Database
-from src.common_utils.system import is_plugin_enable
-
-
 require('core')
+from src.plugins.core.core import GlobalCore
 
 global_config = get_driver().config
 config = Config.parse_obj(global_config)
 plugin_name = "member"
-core_db = Database()
-if not core_db.connect_table("core"):
-    raise Exception("connect core table error")
+global_core = GlobalCore()
 
 
-member = on_notice(priority=10)
+async def check_enable(event: Event) -> bool:
+    if not isinstance(event, GroupDecreaseNoticeEvent) and not isinstance(event, GroupIncreaseNoticeEvent):
+        return False
+    return global_core.is_plugin_enable(plugin_name, event.group_id)
+
+member = on_notice(priority=10, rule=check_enable)
 
 
 @member.handle()
 async def handle(event: Event):
     if not isinstance(event, GroupDecreaseNoticeEvent) and not isinstance(event, GroupIncreaseNoticeEvent):
-        return
-
-    enable = await is_plugin_enable(event, core_db, plugin_name)
-    if enable is False:
         return
 
     bot = nonebot.get_bot()

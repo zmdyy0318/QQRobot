@@ -7,7 +7,8 @@ from nonebot.log import logger
 from src.common_utils.system import BeanContainer
 from src.common_utils.database import Database
 from src.common_utils.aliyun import Ocr
-from nonebot.adapters.onebot.v11 import Event, GroupMessageEvent
+from src.common_utils.interface import IPluginBase
+from nonebot.adapters.onebot.v11 import GroupMessageEvent
 from nonebot.adapters.onebot.v11.message import Message, MessageSegment
 from PIL import Image, ImageOps
 
@@ -21,34 +22,43 @@ class GroupInfo:
         self.count = count
 
 
-class Repeat:
-    __bean_container: BeanContainer
+class Repeat(IPluginBase):
     __group_map = {}
 
-    def __init__(self, bean_container: BeanContainer):
-        self.__bean_container = bean_container
+    def init_module(self):
+        pass
 
-    async def handle(self, event: GroupMessageEvent):
-        await self.__handle_message(event)
-        await self.__handle_image(event)
+    async def handle_event(self, event: GroupMessageEvent):
+        ret = self.__handle_image(event)
+        if ret is not None:
+            return ret
+        ret = self.__handle_message(event)
+        if ret is not None:
+            return ret
 
-    async def __handle_message(self, event: GroupMessageEvent):
-        bot = nonebot.get_bot()
+        return None
+
+    async def task(self, groups: list):
+        pass
+
+    def __handle_message(self, event: GroupMessageEvent):
         group_id = int(event.group_id)
+
         if group_id not in self.__group_map:
             self.__group_map[group_id] = GroupInfo(event.message, 1)
-            return
+            return None
 
         if self.__group_map[group_id].last_message != event.message:
             self.__group_map[group_id].count = 1
             self.__group_map[group_id].last_message = event.message
-            return
+            return None
         self.__group_map[group_id].count += 1
 
         if self.__group_map[group_id].count == 3:
-            await bot.send_group_msg(group_id=group_id, message=event.message)
+            return event.message
 
-    async def __handle_image(self, event: GroupMessageEvent):
+    def __handle_image(self, event: GroupMessageEvent):
+        ret_message = None
         data_list = []
         for seg in event.get_message():
             if seg.type == "image":
@@ -61,8 +71,7 @@ class Repeat:
             return
 
         group_id = int(event.group_id)
-        bot = nonebot.get_bot()
-        db: Database = self.__bean_container.get_bean(Database)
+        db: Database = self.bean_container.get_bean(Database)
         for data in data_list:
             file = data["file"]
             url = data["url"]
@@ -93,13 +102,14 @@ class Repeat:
                     ret, buffer = self.__flip_image(url)
                     if ret is True and buffer is not None:
                         message = Message(MessageSegment.image(buffer))
-                        await bot.send_group_msg(group_id=group_id, message=message)
+                        ret_message = message
                 else:
                     db.update_value(file, "cur_num", cur_num)
                 db.update_value(file, "last_time", int(time.time()))
+        return ret_message
 
     def __flip_image(self, url: str) -> (bool, io.BytesIO):
-        ocr: Ocr = self.__bean_container.get_bean(Ocr)
+        ocr: Ocr = self.bean_container.get_bean(Ocr)
         try:
             response = httpx.get(url)
             if response.status_code != 200:

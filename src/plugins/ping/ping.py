@@ -1,17 +1,34 @@
 import httpx
-from src.common_utils.system import BeanContainer
+import nonebot
+from src.common_utils.interface import IPluginBase
+from nonebot.adapters.onebot.v11 import GroupMessageEvent
+from nonebot.log import logger
 from .config import Config
 
 
-class Ping:
-    __bean_container: BeanContainer
+class Ping(IPluginBase):
     __config: Config
 
-    def __init__(self, bean_container: BeanContainer):
-        self.__bean_container = bean_container
-        self.__config = bean_container.get_bean(Config)
+    def init_module(self):
+        self.__config = self.bean_container.get_bean(Config)
 
-    async def ping_proxy(self):
+    async def handle_event(self, event: GroupMessageEvent):
+        message = "ping"
+        message += self.__ping_proxy()
+        return message
+
+    async def task(self, groups: list):
+        message = "ping"
+        message += self.__ping_proxy()
+        bot = nonebot.get_bot()
+        for group in groups:
+            try:
+                await bot.send_group_msg(group_id=group, message=message)
+            except Exception as e:
+                logger.error(f"send ping msg error, e:{e}")
+                continue
+
+    def __ping_proxy(self):
         proxy_url = f"http://{self.__config.proxy_host}:{self.__config.proxy_port}"
         ping_url = "http://www.google.com"
         ret_msg = "\nproxy "

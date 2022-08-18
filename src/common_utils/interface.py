@@ -1,16 +1,18 @@
 from abc import ABCMeta, abstractmethod
 from .system import BeanContainer
+from nonebot.adapters.onebot.v11 import Event
 
 
-class IPluginTextBase(metaclass=ABCMeta):
+class IPluginBase(metaclass=ABCMeta):
     __keyword: str
     __help_text: str
     bean_container: BeanContainer
 
-    def __init__(self, keyword: str, help_text: str, bean_container: BeanContainer):
+    def __init__(self, bean_container: BeanContainer, keyword: str = "", help_text: str = ""):
         self.__keyword = keyword
         self.__help_text = help_text
         self.bean_container = bean_container
+        self.init_module()
 
     def match_keyword(self, plain_text: str) -> bool:
         if plain_text.find(self.__keyword) == 0:
@@ -28,7 +30,11 @@ class IPluginTextBase(metaclass=ABCMeta):
         return self.__help_text
 
     @abstractmethod
-    async def handle(self, from_id: int, plain_text: str):
+    def init_module(self):
+        pass
+
+    @abstractmethod
+    async def handle_event(self, event: Event):
         pass
 
     @abstractmethod

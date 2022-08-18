@@ -1,15 +1,24 @@
-from src.common_utils.interface import IPluginTextBase
+from src.common_utils.interface import IPluginBase
 from src.common_utils.database import Database
 from src.common_utils.genshin_api import API
 from nonebot.log import logger
+from nonebot.adapters.onebot.v11 import GroupMessageEvent
 
 
-class SignReward(IPluginTextBase):
+class SignReward(IPluginBase):
     __sign_success = "签到成功,%s"
     __sign_fail = "签到失败,%s"
 
-    async def handle(self, from_id: int, plain_text: str):
-        logger.info(f"SignReward handle from_id:{from_id} plain_text:{plain_text}")
+    def init_module(self):
+        pass
+
+    async def handle_event(self, event: GroupMessageEvent):
+        from_id = int(event.get_user_id())
+        plain_text = event.get_plaintext()
+        plain_text = self.strip_keyword(plain_text)
+        if len(plain_text) != 0:
+            return None
+
         db: Database = self.bean_container.get_bean(Database)
         ret, cookie = db.get_value(from_id, "cookie")
         if ret is False:

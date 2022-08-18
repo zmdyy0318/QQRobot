@@ -1,10 +1,11 @@
-from src.common_utils.interface import IPluginTextBase
+from src.common_utils.interface import IPluginBase
 from src.common_utils.database import Database
 from src.common_utils.genshin_api import API
 from nonebot.log import logger
+from nonebot.adapters.onebot.v11 import GroupMessageEvent
 
 
-class BindAccount(IPluginTextBase):
+class BindAccount(IPluginBase):
     __bind_tip = "PC打开https://bbs.mihoyo.com/ys/登陆后,右键检查,选择控制台,粘贴以下代码,在弹出的窗口点确认,然后粘贴发送,绑定完毕记得撤回：\n" \
                  "var cookie=document.cookie;" \
                  "var Str_Num=cookie.indexOf('_MHYUUID=');" \
@@ -14,8 +15,14 @@ class BindAccount(IPluginTextBase):
     __bind_success = "绑定成功,请及时撤回绑定cookie\n%s"
     __bind_fail = "绑定失败,%s"
 
-    async def handle(self, from_id: int, plain_text: str):
-        logger.info("BindAccount handle from_id:%d plain_text:%s" % (from_id, plain_text))
+    def init_module(self):
+        pass
+
+    async def handle_event(self, event: GroupMessageEvent):
+        from_id = int(event.get_user_id())
+        plain_text = event.get_plaintext()
+        plain_text = self.strip_keyword(plain_text)
+
         if len(plain_text) == 0:
             return self.__bind_tip
 

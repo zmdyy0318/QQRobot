@@ -1,27 +1,22 @@
 import nonebot
-from src.common_utils.interface import IPluginTextBase
+from src.common_utils.interface import IPluginBase
 from src.common_utils.genshin_api import API
 from src.common_utils.database import Database
 from src.common_utils.system import JsonUtil
 from nonebot.log import logger
+from nonebot.adapters.onebot.v11 import GroupMessageEvent
 from nonebot.adapters.onebot.v11.message import Message, MessageSegment
 
 
-class FetchNews(IPluginTextBase):
+class FetchNews(IPluginBase):
     __fetched_news = "获取新闻成功,%s"
     __fetch_fail = "获取新闻失败,%s"
     __bbs_url = "https://bbs.mihoyo.com/ys/article/"
 
-    async def handle(self, from_id: int, plain_text: str):
-        logger.info("FetchNews handle from_id:%d plain_text:%s" % (from_id, plain_text))
+    def init_module(self):
+        pass
 
-        if self.get_keyword() == "获取公告":
-            pass
-        elif self.get_keyword() == "获取活动":
-            pass
-        elif self.get_keyword() == "获取咨询":
-            pass
-
+    async def handle_event(self, event: GroupMessageEvent):
         url_type = self.get_url_type()
         gs = API()
         success, news_list = await gs.get_news(3, url_type)
@@ -122,10 +117,10 @@ class FetchNews(IPluginTextBase):
 
     def get_url_type(self) -> int:
         key_word = self.get_keyword()
-        if key_word == "获取公告":
+        if key_word.find("获取公告") >= 0:
             return 1
-        elif key_word == "获取活动":
+        elif key_word.find("获取活动") >= 0:
             return 2
-        elif key_word == "获取资讯":
+        elif key_word.find("获取资讯") >= 0:
             return 3
         return 0
