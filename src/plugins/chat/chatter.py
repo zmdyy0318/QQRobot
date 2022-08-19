@@ -78,7 +78,7 @@ class Chatter(IPluginBase):
             ret, document = self.__nlp.get_nlp_info_by_text(plain_text)
             if ret is True:
                 tokens = [
-                    token for token in document if token.word.isalpha() and token.word not in self.stop_word
+                    token for token in document if token.word.isalpha() and token.word not in self.__stop_words
                 ]
                 if len(tokens) >= 2:
                     response = self.__chatbot.get_response(plain_text)
