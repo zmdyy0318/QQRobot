@@ -66,21 +66,6 @@ class Pixiv(IPluginBase):
             return f"休息,休息{60 - (cur_time - last_time)}秒"
 
         bot = nonebot.get_bot()
-        try:
-            if is_r18:
-                message = "获取涩涩..."
-            else:
-                message = "获取图片..."
-            if len(plain_text) == 0:
-                message += "随机"
-            else:
-                message += plain_text
-            await bot.send_group_msg(group_id=group_id, message=message)
-        except Exception as e:
-            logger.error(f"Pixiv handle_event send_group_msg failed:{e}")
-            return self.__fail_message
-
-        db.update_value(group_id, "last_time", int(time.time()))
 
         if len(plain_text) == 0:
             ret, mode = db.get_value(group_id, "mode")
@@ -95,15 +80,32 @@ class Pixiv(IPluginBase):
             if ret is False:
                 return self.__fail_message
 
-        message = self.__pixiv_item_to_message(item, self_id)
-        if message is None:
+        url_list = []
+        try:
+            html = BeautifulSoup(item.description, "html.parser")
+            images = html.find_all("img")
+            for image in images:
+                url_list.append(image["src"])
+            if is_r18:
+                r18_msg = "涩涩"
+            else:
+                r18_msg = "图片"
+            info = f'{item.title}\n' \
+                   f'{html.find("p").text}\n' \
+                   f'pixiv id:{item.link.split("/")[-1]}\n' \
+                   f'正在获取{len(images)}张{r18_msg}...'
+            await bot.send_group_msg(group_id=group_id, message=info)
+        except Exception as e:
+            logger.error(f"Pixiv handle_event parse html failed:{e}")
             return self.__fail_message
 
-        try:
-            await bot.send_group_forward_msg(group_id=group_id, messages=message)
-        except Exception as e:
-            logger.error(f"Pixiv handle_event send_group_forward_msg failed:{e}")
-            return self.__fail_message
+        db.update_value(group_id, "last_time", int(time.time()))
+
+        ret, buffer = self.__image_to_gif(url_list)
+        if ret is True and buffer is not None:
+            return Message(MessageSegment.image(buffer))
+
+        return self.__fail_message
 
     async def task(self, groups: list):
         pass
@@ -153,44 +155,27 @@ class Pixiv(IPluginBase):
             logger.error(f"__get_search_item failed, e:{e}")
             return False, None
 
-    def __pixiv_item_to_message(self, item: PixivItem, send_id: int):
+    def __image_to_gif(self, urls: list) -> (bool, io.BytesIO):
         try:
-            message_list = []
-            html = BeautifulSoup(item.description, "html.parser")
-            images = html.find_all("img")
-            info = f'{item.title}\n' \
-                   f'{html.find("p").text}\n' \
-                   f'pixiv id:{item.link.split("/")[-1]}\n' \
-                   f'image count:{len(images)}'
-            message_list.append(MessageSegment.node_custom(send_id, "114514", info))
-            for image in images:
-                ret, buffer = self.__random_image(image["src"])
-                if ret is False or buffer is None:
+            images = []
+            for url in urls:
+                response = httpx.get(url, proxies=self.__proxy_url)
+                if response.status_code != 200:
+                    logger.error(f"Repeat __image_to_gif get_image failed:{url} {response.status_code}")
                     continue
-                msg_image = MessageSegment.image(buffer)
-                message_list.append(MessageSegment.node_custom(send_id, "114514", Message(msg_image)))
-            message = Message(message_list)
-            return message
-        except Exception as e:
-            logger.error(f"__pixiv_item_to_message failed, e:{e}")
-            return None
-
-    def __random_image(self, url: str) -> (bool, io.BytesIO):
-        try:
-            response = httpx.get(url, proxies=self.__proxy_url)
-            if response.status_code != 200:
-                logger.error(f"Repeat __random_image get_image failed:{url} {response.status_code}")
-                return False, None
-            image = Image.open(io.BytesIO(response.content))
-            if image is None:
-                logger.error(f"Repeat __random_image open image failed:{url}")
-                return False, None
-            width = image.width
-            height = image.height
-            image.putpixel((width - 1, height - 1), image.getpixel((0, 0)))
+                image = Image.open(io.BytesIO(response.content))
+                if image is None:
+                    logger.error(f"Repeat __image_to_gif open image failed:{url}")
+                    continue
+                image.thumbnail((1024, 768), Image.ANTIALIAS)
+                images.append(image)
+            if len(images) == 0:
+                return True, None
+            image_cover = images[0].convert("1")
             buffer = io.BytesIO()
-            image.save(buffer, format=image.format)
+            image_cover.save(buffer, format="GIF", save_all=True, append_images=images,
+                             duration=1000, loop=0)
             return True, buffer
         except Exception as e:
-            logger.error(f"Repeat __random_image failed:{url} {e}")
+            logger.error(f"Repeat __image_to_gif failed:{e}")
             return False, None
