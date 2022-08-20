@@ -149,8 +149,7 @@ class Pixiv(IPluginBase):
             for url in urls:
                 response = httpx.get(url, proxies=self.__proxy_url)
                 if response.status_code != 200:
-                    logger.error(f"__get_search_item failed, status_code:{response.status_code}")
-                    return False, None
+                    continue
                 root = ET.fromstring(response.text)
                 items.extend(root.findall("./channel/item"))
 
