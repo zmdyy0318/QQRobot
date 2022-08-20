@@ -43,7 +43,7 @@ async def check_enable(event: GroupMessageEvent) -> bool:
         return False
     return global_core.is_plugin_enable(plugin_name, event.group_id)
 
-pixiv = on_message(priority=10, rule=check_enable)
+pixiv = on_message(priority=1, rule=check_enable)
 
 
 @pixiv.handle()
