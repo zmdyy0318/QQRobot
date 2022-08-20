@@ -100,7 +100,7 @@ class Chatter(IPluginBase):
             if message_cache.next_interval > 10:
                 message_cache.next_interval = message_cache.next_interval - 10
 
-        if response is not None and 0.5 < response.confidence < 1 \
+        if response is not None and 0.6 < response.confidence < 1 \
                 and int(time.time()) - message_cache.last_send_time > 60:
             message_cache.last_send_time = int(time.time())
             # 删除回复后学习队列仍然存在
