@@ -4,6 +4,7 @@ import httpx
 import random
 import nonebot
 import xml.etree.ElementTree as ET
+from urllib import parse
 from bs4 import BeautifulSoup
 from src.common_utils.system import Database
 from src.common_utils.interface import IPluginBase
@@ -80,6 +81,9 @@ class Pixiv(IPluginBase):
             if ret is False:
                 return self.__fail_message
 
+        if item is None:
+            return "没有找到涩图,稍后再试试"
+
         url_list = []
         try:
             html = BeautifulSoup(item.description, "html.parser")
@@ -135,16 +139,23 @@ class Pixiv(IPluginBase):
         mode = 1
         if is_r18:
             mode = 2
-        url = f"https://rsshub.app/pixiv/search/{keyword}/popular/{mode}"
+        keyword_url = parse.quote(keyword)
+        urls = [
+            f"https://rsshub.app/pixiv/search/{keyword_url}/normal/{mode}",
+            f"https://rsshub.app/pixiv/search/{keyword_url}/popular/{mode}",
+        ]
         try:
-            response = httpx.get(url, proxies=self.__proxy_url)
-            if response.status_code != 200:
-                logger.error(f"__get_search_item failed, status_code:{response.status_code}")
-                return False, None
-            root = ET.fromstring(response.text)
-            items = root.findall("./channel/item")
+            items = []
+            for url in urls:
+                response = httpx.get(url, proxies=self.__proxy_url)
+                if response.status_code != 200:
+                    logger.error(f"__get_search_item failed, status_code:{response.status_code}")
+                    return False, None
+                root = ET.fromstring(response.text)
+                items.extend(root.findall("./channel/item"))
+
             if len(items) == 0:
-                return False, None
+                return True, None
             index = random.randint(0, len(items) - 1)
             item = PixivItem()
             item.title = items[index].find("title").text
