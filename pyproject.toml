@@ -19,6 +19,7 @@ aliyun-python-sdk-alinlp = "^1.0.16"
 alibabacloud-tea-openapi = "^0.3.4"
 alibabacloud-ocr-api20210707 = "^1.1.7"
 Pillow = "^9.2.0"
+beautifulsoup4 = "^4.11.1"
 
 [tool.poetry.dev-dependencies]
 nb-cli = "^0.6.0"
