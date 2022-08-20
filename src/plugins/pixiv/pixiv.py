@@ -88,6 +88,7 @@ class Pixiv(IPluginBase):
         try:
             html = BeautifulSoup(item.description, "html.parser")
             images = html.find_all("img")
+            image_small = images[0:5]
             for image in images:
                 url_list.append(image["src"])
             if is_r18:
@@ -97,7 +98,7 @@ class Pixiv(IPluginBase):
             info = f'{item.title}\n' \
                    f'{html.find("p").text}\n' \
                    f'pixiv id:{item.link.split("/")[-1]}\n' \
-                   f'正在获取{len(images)}张{r18_msg}...'
+                   f'正在获取{len(images)}张{r18_msg}中的{len(image_small)}张...'
             await bot.send_group_msg(group_id=group_id, message=info)
         except Exception as e:
             logger.error(f"Pixiv handle_event parse html failed:{e}")
@@ -181,7 +182,8 @@ class Pixiv(IPluginBase):
                 images.append(image)
             if len(images) == 0:
                 return True, None
-            image_cover = images[0].convert("1")
+            image_cover = Image.new("RGBA", (1024, 768), (255, 255, 255))
+            image_cover.putpixel((0, 0), (random.randint(0, 255), random.randint(0, 255), 0))
             buffer = io.BytesIO()
             image_cover.save(buffer, format="GIF", save_all=True, append_images=images,
                              duration=1000, loop=0)
