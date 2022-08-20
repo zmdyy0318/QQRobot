@@ -68,9 +68,9 @@ class Pixiv(IPluginBase):
         bot = nonebot.get_bot()
         try:
             if is_r18:
-                message = "涩涩..."
+                message = "获取涩涩..."
             else:
-                message = "图片..."
+                message = "获取图片..."
             if len(plain_text) == 0:
                 message += "随机"
             else:
@@ -79,6 +79,8 @@ class Pixiv(IPluginBase):
         except Exception as e:
             logger.error(f"Pixiv handle_event send_group_msg failed:{e}")
             return self.__fail_message
+
+        db.update_value(group_id, "last_time", int(time.time()))
 
         if len(plain_text) == 0:
             ret, mode = db.get_value(group_id, "mode")
@@ -99,7 +101,6 @@ class Pixiv(IPluginBase):
 
         try:
             await bot.send_group_forward_msg(group_id=group_id, messages=message)
-            db.update_value(group_id, "last_time", int(time.time()))
         except Exception as e:
             logger.error(f"Pixiv handle_event send_group_forward_msg failed:{e}")
             return self.__fail_message
