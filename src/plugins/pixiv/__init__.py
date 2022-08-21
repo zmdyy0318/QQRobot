@@ -2,7 +2,7 @@ import nonebot
 from nonebot import require
 from nonebot import get_driver
 from nonebot.log import logger
-from nonebot import on_message
+from nonebot import on_startswith
 from nonebot.adapters.onebot.v11 import GroupMessageEvent
 
 from .config import Config
@@ -46,7 +46,7 @@ async def check_enable(event: GroupMessageEvent) -> bool:
         return False
     return global_core.is_plugin_enable(plugin_name, event.group_id)
 
-pixiv = on_message(priority=1, rule=check_enable)
+pixiv = on_startswith(plugin_keyword, priority=1, rule=check_enable)
 
 
 @pixiv.handle()
