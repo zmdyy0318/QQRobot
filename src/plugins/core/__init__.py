@@ -1,7 +1,7 @@
 import json
 from nonebot import get_driver
 from nonebot import on_startswith
-from nonebot.adapters.onebot.v11 import Event, GroupMessageEvent
+from nonebot.adapters.onebot.v11 import GroupMessageEvent
 from nonebot.log import logger
 from .config import Config
 from .core import GlobalCore
@@ -26,7 +26,7 @@ core = on_startswith(plugin_keyword, priority=1)
 
 
 @core.handle()
-async def handle(event: Event):
+async def handle(event: GroupMessageEvent):
     is_normal_user = True
     if isinstance(event, GroupMessageEvent):
         is_normal_user = event.sender.role == "member"

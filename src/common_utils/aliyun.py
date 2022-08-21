@@ -6,6 +6,7 @@ from aliyunsdkcore import client
 from aliyunsdkgreen.request.v20180509 import ImageSyncScanRequest
 from aliyunsdkgreenextension.request.extension import HttpContentHelper
 from aliyunsdkalinlp.request.v20200629 import GetPosChGeneralRequest
+from aliyunsdkalimt.request.v20181012 import TranslateRequest
 from alibabacloud_tea_openapi import models as open_api_models
 from alibabacloud_ocr_api20210707.client import Client as OcrClient
 from alibabacloud_ocr_api20210707 import models as OcrModels
@@ -184,3 +185,31 @@ class Ocr(ICore):
             logger.error(f"Ocr do_action error, e:{e}")
             return False, []
 
+
+class Translate(ICore):
+    def translate(self, text: str, src_language: str, dst_language: str) -> (bool, str):
+        if len(text) == 0:
+            return True, ""
+        return self.__do_request(text, src_language, dst_language)
+
+    def __do_request(self, text: str, src_language: str, dst_language: str) -> (bool, str):
+        request = TranslateRequest.TranslateRequest()
+        request.set_SourceLanguage(src_language)
+        request.set_TargetLanguage(dst_language)
+        request.set_SourceText(text)
+        request.set_FormatType("text")
+        request.set_Scene("general")
+        return self.__do_action(request)
+
+    def __do_action(self, request: TranslateRequest) -> (bool, str):
+        try:
+            clt: client.AcsClient = self.get_clt()
+            response = clt.do_action_with_exception(request)
+            json_res = json.loads(response)
+            if not json_res:
+                logger.error(f"Translate do_action_with_exception failed")
+                return False, ""
+            return True, json_res["Data"]["Translated"]
+        except Exception as e:
+            logger.error(f"Translate do_action error, e:{e}")
+            return False, ""

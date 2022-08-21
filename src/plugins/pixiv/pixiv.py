@@ -7,6 +7,7 @@ import xml.etree.ElementTree as ET
 from urllib import parse
 from bs4 import BeautifulSoup
 from src.common_utils.system import Database
+from src.common_utils.aliyun import Translate
 from src.common_utils.interface import IPluginBase
 from nonebot.adapters.onebot.v11 import Message, GroupMessageEvent, MessageSegment
 from nonebot.log import logger
@@ -23,12 +24,14 @@ class PixivItem:
 class Pixiv(IPluginBase):
     __fail_message = "涩涩失败,稍后再涩涩"
     __db: Database
+    __translate: Translate
     __config: Config
     __proxy_url: str
 
     def init_module(self):
         self.__db = self.bean_container.get_bean(Database)
         self.__config = self.bean_container.get_bean(Config)
+        self.__translate = self.bean_container.get_bean(Translate)
         self.__proxy_url = f"http://{self.__config.proxy_host}:{self.__config.proxy_port}"
 
     async def handle_event(self, event: GroupMessageEvent):
@@ -41,7 +44,7 @@ class Pixiv(IPluginBase):
             return self.get_help()
 
         is_r18 = False
-        if plain_text.endswith("涩图"):
+        if plain_text.endswith("涩图") or plain_text.endswith("色图") or plain_text.endswith("瑟图"):
             is_r18 = True
             plain_text = plain_text[:-2]
 
@@ -108,7 +111,13 @@ class Pixiv(IPluginBase):
 
         ret, buffer = self.__image_to_gif(url_list)
         if ret is True and buffer is not None:
-            return Message(MessageSegment.image(buffer))
+            message = Message(MessageSegment.image(buffer))
+            try:
+                await bot.send_group_msg(group_id=group_id, message=message)
+                return None
+            except Exception as e:
+                logger.error(f"Pixiv handle_event send image failed:{e}")
+                return self.__fail_message
 
         return self.__fail_message
 
@@ -140,15 +149,19 @@ class Pixiv(IPluginBase):
         mode = 1
         if is_r18:
             mode = 2
-        keyword_url = parse.quote(keyword)
-        urls = [
-            f"https://rsshub.app/pixiv/search/{keyword_url}/normal/{mode}",
-            f"https://rsshub.app/pixiv/search/{keyword_url}/popular/{mode}",
-        ]
+
+        keywords = [keyword]
+        ret, keyword_en = self.__translate.translate(keyword, "zh", "en")
+        if ret is True and keyword != keyword_en:
+            keywords.append(keyword_en)
+        ret, keyword_ja = self.__translate.translate(keyword, "zh", "ja")
+        if ret is True and keyword != keyword_ja:
+            keywords.append(keyword_ja)
+
         try:
             items = []
-            for url in urls:
-                response = httpx.get(url, proxies=self.__proxy_url)
+            for keyword in keywords:
+                response = httpx.get(f"https://rsshub.app/pixiv/search/{keyword}/normal/{mode}", proxies=self.__proxy_url)
                 if response.status_code != 200:
                     continue
                 root = ET.fromstring(response.text)
@@ -182,7 +195,7 @@ class Pixiv(IPluginBase):
                 images.append(image)
             if len(images) == 0:
                 return True, None
-            image_cover = Image.new("RGBA", (1024, 768), (255, 255, 255))
+            image_cover = Image.new("RGBA", (images[0].width, images[0].height), (255, 255, 255))
             image_cover.putpixel((0, 0), (random.randint(0, 255), random.randint(0, 255), 0))
             buffer = io.BytesIO()
             image_cover.save(buffer, format="GIF", save_all=True, append_images=images,
