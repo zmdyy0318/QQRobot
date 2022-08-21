@@ -199,7 +199,7 @@ class Pixiv(IPluginBase):
             image_cover.putpixel((0, 0), (random.randint(0, 255), random.randint(0, 255), 0))
             buffer = io.BytesIO()
             image_cover.save(buffer, format="GIF", save_all=True, append_images=images,
-                             duration=3000, loop=0)
+                             duration=2000, loop=0)
             return True, buffer
         except Exception as e:
             logger.error(f"Repeat __image_to_gif failed:{e}")
