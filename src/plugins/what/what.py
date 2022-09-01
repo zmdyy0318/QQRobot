@@ -20,7 +20,7 @@ class What(IPluginBase):
         if len(text) == 0:
             return None
 
-        if self.match_keyword(text):
+        if text.endswith(self.get_keyword()):
             ret, nlp_list = self.__nlp_pos.get_nlp_info_by_text(text)
             if ret is False:
                 logger.error(f"What::handle_event get_nlp_info_by_text error, text: {text}")
