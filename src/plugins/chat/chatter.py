@@ -1,5 +1,5 @@
 from src.common_utils.system import BeanContainer
-from src.common_utils.aliyun import Nlp
+from src.common_utils.aliyun import NlpPos
 from src.common_utils.database import Database
 from src.common_utils.interface import IPluginBase
 from nonebot.log import logger
@@ -30,7 +30,7 @@ class Chatter(IPluginBase):
 
     def init_module(self):
         self.__config = self.bean_container.get_bean(Config)
-        self.__nlp: Nlp = self.bean_container.get_bean(Nlp)
+        self.__nlp: NlpPos = self.bean_container.get_bean(NlpPos)
         self.__message_cache = {}
         self.__default_interval = 60 * 10
         success, bot = self.__create_bot(0)

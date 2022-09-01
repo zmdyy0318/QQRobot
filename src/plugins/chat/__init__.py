@@ -6,7 +6,7 @@ from nonebot.adapters.onebot.v11 import GroupMessageEvent
 from .config import Config
 
 from src.common_utils.system import BeanContainer
-from src.common_utils.aliyun import Nlp
+from src.common_utils.aliyun import NlpPos
 from .chatter import Chatter
 require('core')
 from src.plugins.core.core import GlobalCore
@@ -16,7 +16,7 @@ config = Config.parse_obj(global_config)
 plugin_name = "chat"
 
 global_core = GlobalCore()
-nlp = Nlp(config.ali_access_id, config.ali_access_key, config.ali_region_hz)
+nlp = NlpPos(config.ali_access_id, config.ali_access_key, config.ali_region_hz)
 
 bean_container = BeanContainer()
 bean_container.register(config)

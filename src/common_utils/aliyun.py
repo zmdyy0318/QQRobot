@@ -5,7 +5,7 @@ from abc import ABCMeta
 from aliyunsdkcore import client
 from aliyunsdkgreen.request.v20180509 import ImageSyncScanRequest
 from aliyunsdkgreenextension.request.extension import HttpContentHelper
-from aliyunsdkalinlp.request.v20200629 import GetPosChGeneralRequest
+from aliyunsdkalinlp.request.v20200629 import GetPosChGeneralRequest, GetNerChEcomRequest
 from aliyunsdkalimt.request.v20181012 import TranslateRequest
 from alibabacloud_tea_openapi import models as open_api_models
 from alibabacloud_ocr_api20210707.client import Client as OcrClient
@@ -89,13 +89,13 @@ class Green(ICore):
             return False, 0.0
 
 
-class NlpInfo:
+class NlpPosInfo:
     def __init__(self, pos: str, word: str):
         self.pos = pos
         self.word = word
 
 
-class Nlp(ICore):
+class NlpPos(ICore):
     def get_nlp_info_by_text(self, text: str) -> (bool, list):
         if len(text) == 0:
             return True, []
@@ -117,17 +117,56 @@ class Nlp(ICore):
             response = clt.do_action_with_exception(request)
             json_res = json.loads(response)
             if not json_res:
-                logger.error(f"Nlp do_action_with_exception failed")
+                logger.error(f"NlpPos do_action_with_exception failed")
                 return False, []
             data = json_res["Data"]
             data_json = json.loads(data)
             result = data_json["result"]
             ret = []
             for item in result:
-                ret.append(NlpInfo(item["pos"], item["word"]))
+                ret.append(NlpPosInfo(item["pos"], item["word"]))
             return True, ret
         except Exception as e:
-            logger.error(f"Nlp do_action error, e:{e}")
+            logger.error(f"NlpPos do_action error, e:{e}")
+            return False, []
+
+
+class NlpNerInfo:
+    def __init__(self, weight: float, tag: str, word: str):
+        self.weight = weight
+        self.tag = tag
+        self.word = word
+
+
+class NlpNer(ICore):
+    def get_nlp_info_by_text(self, text: str) -> (bool, list):
+        if len(text) == 0:
+            return True, []
+        return self.__do_request(text)
+
+    def __do_request(self, text: str) -> (bool, list):
+        request = GetNerChEcomRequest.GetNerChEcomRequest()
+        request.set_Text(text)
+        request.set_ServiceCode("alinlp")
+        return self.__do_action(request)
+
+    def __do_action(self, request: GetPosChGeneralRequest) -> (bool, list):
+        try:
+            clt: client.AcsClient = self.get_clt()
+            response = clt.do_action_with_exception(request)
+            json_res = json.loads(response)
+            if not json_res:
+                logger.error(f"NlpNer do_action_with_exception failed")
+                return False, []
+            data = json_res["Data"]
+            data_json = json.loads(data)
+            result = data_json["result"]
+            ret = []
+            for item in result:
+                ret.append(NlpNerInfo(float(item["weight"]), item["tag"], item["word"]))
+            return True, ret
+        except Exception as e:
+            logger.error(f"NlpNer do_action error, e:{e}")
             return False, []
 
 

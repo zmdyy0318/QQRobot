@@ -136,10 +136,26 @@ class Repeat(IPluginBase):
                 bottom = max(ocr_info.pos0[1], ocr_info.pos1[1],
                              ocr_info.pos2[1], ocr_info.pos3[1])
                 center = [int(image.width / 2), int(image.height / 2)]
+
+                space = int((bottom - top) * 0.1)
+                left = left - space
+                right = right + space
+                top = top - space
+                bottom = bottom + space
+                if left < 0:
+                    left = 0
+                if top < 0:
+                    top = 0
+                if right > image.width:
+                    right = image.width
+                if bottom > image.height:
+                    bottom = image.height
+
                 crop_image = image.crop((left, top, right, bottom))
                 left = center[0] + (center[0] - left)
                 right = center[0] + (center[0] - right)
                 left, right = right, left
+
                 mirror_image.paste(crop_image, (left, top, right, bottom))
             buffer = io.BytesIO()
             mirror_image.save(buffer, format=image.format)

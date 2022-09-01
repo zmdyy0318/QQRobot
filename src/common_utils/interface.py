@@ -15,7 +15,7 @@ class IPluginBase(metaclass=ABCMeta):
         self.init_module()
 
     def match_keyword(self, plain_text: str) -> bool:
-        if plain_text.find(self.__keyword) == 0:
+        if plain_text.find(self.__keyword) >= 0:
             return True
         else:
             return False

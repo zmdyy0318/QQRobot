@@ -1,4 +1,4 @@
-from src.common_utils.aliyun import Nlp
+from src.common_utils.aliyun import NlpPos
 from .attrs import STOP_WORDS, TAG_POS
 
 
@@ -10,7 +10,7 @@ class CustomLemmaTagger(object):
         self.punctuation_table = str.maketrans(dict.fromkeys(punctuation))
         self.stop_word = STOP_WORDS
         self.tag_pos = TAG_POS
-        self.nlp: Nlp = language
+        self.nlp: NlpPos = language
         self.language = "xx"
 
     def get_text_index_string(self, text: str):

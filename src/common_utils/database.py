@@ -108,6 +108,28 @@ class Database:
         cursor.close()
         return ret, exist
 
+    def is_values_exist(self, values: dict) -> (bool, bool):
+        ret = False
+        exist = False
+        cursor = self.__db.cursor()
+        try:
+            self.__db.ping()
+            sql = "SELECT 1 FROM `%s` WHERE "
+            for k, v in values.items():
+                sql += "`%s` = '%s' AND " % (k, v)
+            sql = sql[:-4] + ";"
+            cursor.execute(sql % self.__table_name)
+            self.__db.commit()
+            data = cursor.fetchone()
+            if data is not None and data[0] == 1:
+                exist = True
+            ret = True
+        except (Exception,) as e:
+            logger.error(f"Database::is_values_exist error, e={e}")
+            self.__last_error_msg = "数据库错误"
+        cursor.close()
+        return ret, exist
+
     def insert_key(self, key: Union[str, int]) -> bool:
         ret = True
         cursor = self.__db.cursor()
@@ -124,6 +146,29 @@ class Database:
         cursor.close()
         return ret
 
+    def insert_values(self, values: dict) -> bool:
+        ret = True
+        cursor = self.__db.cursor()
+        try:
+            self.__db.ping()
+            sql = "INSERT INTO `%s` (%s) VALUES (%s);"
+            cols = ""
+            vals = ""
+            for key, value in values.items():
+                cols += "`%s`," % key
+                vals += "'%s'," % value
+            cols = cols[:-1]
+            vals = vals[:-1]
+            cursor.execute(sql % (self.__table_name, cols, vals))
+            self.__db.commit()
+        except (Exception,) as e:
+            logger.error(f"Database::insert_values error, e={e}")
+            self.__last_error_msg = "数据库错误"
+            self.__db.rollback()
+            ret = False
+        cursor.close()
+        return ret
+
     def get_value(self, key: Union[str, int], col: str) -> (bool, any):
         ret = False
         val = ""
@@ -132,6 +177,28 @@ class Database:
             self.__db.ping()
             sql = "SELECT `%s` FROM `%s` WHERE `%s` = '%s';"
             cursor.execute(sql % (col, self.__table_name, self.__table_key, key))
+            self.__db.commit()
+            data = cursor.fetchone()
+            if data is not None and len(data) > 0:
+                val = data[0]
+            ret = True
+        except (Exception,) as e:
+            logger.error(f"Database::get_value error, e={e}")
+            self.__last_error_msg = "数据库错误"
+        cursor.close()
+        return ret, val
+
+    def get_random_value(self, col: str, values: dict) -> (bool, any):
+        ret = False
+        val = None
+        cursor = self.__db.cursor()
+        try:
+            self.__db.ping()
+            sql = "SELECT `%s` FROM `%s` WHERE "
+            for k, v in values.items():
+                sql += "`%s` = '%s' AND " % (k, v)
+            sql = sql[:-4] + " ORDER BY RAND() LIMIT 1;"
+            cursor.execute(sql % (col, self.__table_name))
             self.__db.commit()
             data = cursor.fetchone()
             if data is not None and len(data) > 0:
@@ -194,13 +261,14 @@ class Database:
     def __create_table(self, table_name: str, table_key: str, table_type: type, table_col: dict) -> None:
         if table_type == str:
             type_str = "VARCHAR(255)"
+            sql = "CREATE TABLE IF NOT EXISTS `%s` (`%s` %s PRIMARY KEY,"
         elif table_type == int:
             type_str = "INT"
+            sql = "CREATE TABLE IF NOT EXISTS `%s` (`%s` %s PRIMARY KEY AUTO_INCREMENT,"
         else:
             raise Exception(f"Database::__create_table error, table_type={table_type}")
         self.__db.ping()
         cursor = self.__db.cursor()
-        sql = "CREATE TABLE IF NOT EXISTS `%s` (`%s` %s PRIMARY KEY,"
         for key, value in table_col.items():
             sql += "`%s` %s," % (key, value)
         sql = sql.rstrip(",")
