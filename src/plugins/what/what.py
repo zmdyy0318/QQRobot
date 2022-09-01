@@ -65,9 +65,9 @@ class What(IPluginBase):
         ret, val = self.__db.get_random_value("word", {"tag": "品牌"})
         if ret is True and val is not None:
             word += val
-        ret, val = self.__db.get_random_value("word", {"tag": "修饰"})
-        if ret is True and val is not None:
-            word += val
+        # ret, val = self.__db.get_random_value("word", {"tag": "修饰"})
+        # if ret is True and val is not None:
+        #     word += val
         ret, val = self.__db.get_random_value("word", {"tag": "品类"})
         if ret is True and val is not None:
             word += val
