@@ -22,7 +22,10 @@ global_core.init_core_db(config.plugin_names)
 core_db = global_core.get_core_db()
 
 
-core = on_startswith(plugin_keyword, priority=1)
+async def check_enable(event: GroupMessageEvent) -> bool:
+    return True
+
+core = on_startswith(plugin_keyword, priority=1, rule=check_enable)
 
 
 @core.handle()
