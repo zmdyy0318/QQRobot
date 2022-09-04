@@ -144,24 +144,28 @@ class Sixty(IPluginBase):
 
             html = BeautifulSoup(item.description, "html.parser")
             node_ps = html.find_all("p")
+            node_imgs = html.find_all("img")
 
             full_width = 600
             image_out = Image.new("RGB", (full_width, 12000), (255, 255, 255))
             draw = ImageDraw.Draw(image_out)
 
             current_height = 0
+
+            for node_img in node_imgs:
+                if node_img.parent.name == "a":
+                    continue
+                url = node_img.attrs["src"]
+                ret, byte = self.__get_image_by_url(url)
+                if ret is False:
+                    continue
+                image = Image.open(byte)
+                image.thumbnail((full_width - 10, 600))
+                image = image.convert("RGB")
+                image_out.paste(image, (5, current_height, full_width - 5, current_height + image.height))
+                current_height += image.height + 10
+
             for node_p in node_ps:
-                node_imgs = node_p.find_all("img")
-                for node_img in node_imgs:
-                    url = node_img.attrs["src"]
-                    ret, byte = self.__get_image_by_url(url)
-                    if ret is False:
-                        continue
-                    image = Image.open(byte)
-                    image.thumbnail((full_width - 10, 600))
-                    image = image.convert("RGB")
-                    image_out.paste(image, (5, current_height, full_width - 5, current_height + image.height))
-                    current_height += image.height + 10
                 text = node_p.text.strip()
                 if len(text) == 0:
                     continue
