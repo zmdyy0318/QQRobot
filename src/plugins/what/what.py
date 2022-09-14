@@ -33,6 +33,8 @@ class What(IPluginBase):
                     break
             if len(word_v) == 0:
                 return None
+            if word_v.endswith(self.get_keyword()):
+                word_v = word_v[:-len(self.get_keyword())]
             ret, ner_word = self.__get_ner_word()
             if ret is False or ner_word is None:
                 return None
