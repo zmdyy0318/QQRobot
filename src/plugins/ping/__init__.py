@@ -50,6 +50,8 @@ async def handle(event: GroupMessageEvent):
 @scheduler.scheduled_job("interval", seconds=60*60)
 async def task():
     groups = global_core.get_enable_group(plugin_name)
+    if len(groups) == 0:
+        return
     for module in module_list:
         await module.task(groups)
 
