@@ -110,6 +110,8 @@ class GenerateImage(IPluginBase):
                    f'使用{model_name_cn}模型'
             if image is not None:
                 info += f'\n使用图片{image.width}x{image.height}'
+            if keyword_en.find(",") <= 0:
+                info += f'\n关键词之间记得用逗号分开哦'
             if point < 50:
                 info += f'\n我要被榨干了'
             await bot.send_group_msg(group_id=group_id, message=info)
@@ -192,8 +194,8 @@ class GenerateImage(IPluginBase):
                     "input": keyword_en,
                     "model": model,
                     "parameters": {
-                        "height": 512,
-                        "width": 512,
+                        "height": 384,
+                        "width": 384,
                         "n_samples": 1,
                         "sampler": "k_euler_ancestral",
                         "scale": 11,
@@ -214,14 +216,16 @@ class GenerateImage(IPluginBase):
                     image_height = 512
                 image = image.resize((image_width, image_height))
                 buffer = io.BytesIO()
+                if image.mode != "RGB":
+                    image = image.convert("RGB")
                 image.save(buffer, format="JPEG")
                 img_str = b64encode(buffer.getvalue()).decode("utf-8")
                 body = {
                     "input": keyword_en,
                     "model": model,
                     "parameters": {
-                        "height": 512,
-                        "width": 512,
+                        "height": 384,
+                        "width": 384,
                         "n_samples": 1,
                         "noise": 0.2,
                         "sampler": "k_euler_ancestral",
