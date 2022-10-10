@@ -247,5 +247,5 @@ class GenerateImage(IPluginBase):
             return True, response.status_code, base64_str
         except (Exception,) as e:
             logger.error(f"Image::__generate_image failed, e:{e}")
-            return False, None
+            return False, -1, None
 
