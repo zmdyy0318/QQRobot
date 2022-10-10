@@ -110,7 +110,7 @@ class GenerateImage(IPluginBase):
                    f'使用{model_name_cn}模型'
             if image is not None:
                 info += f'\n使用图片{image.width}x{image.height}'
-            if keyword_en.find(",") <= 0:
+            if keyword_en.find(",") <= 0 and keyword.find(" ") >= 0:
                 info += f'\n关键词之间记得用逗号分开哦'
             if point < 50:
                 info += f'\n我要被榨干了'
