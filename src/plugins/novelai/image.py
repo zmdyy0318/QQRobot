@@ -46,7 +46,7 @@ class GenerateImage(IPluginBase):
             model_name = "nai-diffusion-furry"
             model_name_cn = "福瑞"
 
-        if len(plain_text) > 100:
+        if len(plain_text) > 1000:
             return "短一点,短一点"
 
         # 初始化
