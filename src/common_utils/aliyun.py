@@ -1,10 +1,12 @@
+import io
 import json
 import uuid
 import time
 from abc import ABCMeta
+from base64 import b64decode
 from aliyunsdkcore import client
 from aliyunsdkgreen.request.v20180509 import ImageSyncScanRequest
-from aliyunsdkgreenextension.request.extension import HttpContentHelper
+from aliyunsdkgreenextension.request.extension import HttpContentHelper, ClientUploader
 from aliyunsdkalinlp.request.v20200629 import GetPosChGeneralRequest, GetNerChEcomRequest
 from aliyunsdkalimt.request.v20181012 import TranslateRequest
 from alibabacloud_tea_openapi import models as open_api_models
@@ -41,6 +43,18 @@ class Green(ICore):
         if len(urls) == 0:
             return True, 0.0
         return self.__do_request(urls)
+
+    def get_image_score_by_bytes(self, image_bytes: io.BytesIO) -> (bool, float):
+        if image_bytes is None:
+            return True, 0.0
+        # 上传二进制文件到服务端。
+        try:
+            uploader = ClientUploader.getImageClientUploader(self.get_clt())
+            url = uploader.uploadBytes(image_bytes)
+        except Exception as e:
+            logger.error(f"Green get_image_score_by_bytes uploadBytes error, e:{e}")
+            return False, 0.0
+        return self.__do_request([url])
 
     def __do_request(self, url: list) -> (bool, float):
         request = ImageSyncScanRequest.ImageSyncScanRequest()

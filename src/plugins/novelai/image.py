@@ -8,6 +8,7 @@ from novelai_api import NovelAI_API, NovelAIError
 from src.common_utils.interface import IPluginBase
 from src.common_utils.database import Database
 from src.common_utils.aliyun import Translate
+from src.common_utils.aliyun import Green
 from nonebot.log import logger
 from nonebot.adapters.onebot.v11 import GroupMessageEvent
 from nonebot.adapters.onebot.v11.message import Message, MessageSegment
@@ -22,11 +23,13 @@ class GenerateImage(IPluginBase):
     __db: Database
     __translate: Translate
     __config: Config
+    __green: Green
 
     def init_module(self):
         self.__db = self.bean_container.get_bean(Database)
         self.__config = self.bean_container.get_bean(Config)
         self.__translate = self.bean_container.get_bean(Translate)
+        self.__green = self.bean_container.get_bean(Green)
 
     async def handle_event(self, event: GroupMessageEvent):
         group_id = int(event.group_id)
@@ -122,6 +125,13 @@ class GenerateImage(IPluginBase):
         ret, code, buffer = await self.__generate_image(token, model_name, keyword_en, image)
         if ret is False:
             return self.__fail_message % f"生成图片失败:{code}"
+
+        ret, score = self.__green.get_image_score_by_bytes(io.BytesIO(b64decode(buffer)))
+        if ret is False:
+            return self.__fail_message % "图片检查失败"
+
+        if score > 0.5:
+            return "画好了,太涩了,不给看"
 
         try:
             img = MessageSegment.image(f"base64://{buffer}")

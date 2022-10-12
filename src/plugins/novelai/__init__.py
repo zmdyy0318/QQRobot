@@ -7,6 +7,7 @@ from .config import Config
 from src.common_utils.database import Database
 from src.common_utils.system import BeanContainer
 from src.common_utils.aliyun import Translate
+from src.common_utils.aliyun import Green
 from .image import GenerateImage
 require('core')
 from src.plugins.core.core import GlobalCore
@@ -26,12 +27,14 @@ novelai_db = Database()
 if not novelai_db.init_table(table_name=plugin_name, table_key="id", table_key_type=int, table_col=data_base_col):
     raise Exception("init novelai_db table error")
 global_core = GlobalCore()
+green = Green(config.ali_access_id, config.ali_access_key, config.ali_region_sh)
 translate = Translate(config.ali_access_id, config.ali_access_key, config.ali_region_hz)
 
 bean_container = BeanContainer()
 bean_container.register(novelai_db)
 bean_container.register(config)
 bean_container.register(translate)
+bean_container.register(green)
 
 module_list = [
     GenerateImage(bean_container, plugin_keyword, "画个什么?\n"
