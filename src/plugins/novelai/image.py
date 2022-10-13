@@ -249,7 +249,7 @@ class GenerateImage(IPluginBase):
                     }
                 }
 
-            response = httpx.post(self.__url + "/ai/generate-image", headers=header, json=body, timeout=30)
+            response = httpx.post(self.__url + "/ai/generate-image", headers=header, json=body, timeout=40)
             if response.status_code != 201:
                 logger.error(f"Image::__generate_image failed, status_code:{response.status_code}")
                 return False, response.status_code, None

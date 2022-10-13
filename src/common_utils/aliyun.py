@@ -51,10 +51,10 @@ class Green(ICore):
         try:
             uploader = ClientUploader.getImageClientUploader(self.get_clt())
             url = uploader.uploadBytes(image_bytes)
+            return self.__do_request([url])
         except Exception as e:
             logger.error(f"Green get_image_score_by_bytes uploadBytes error, e:{e}")
             return False, 0.0
-        return self.__do_request([url])
 
     def __do_request(self, url: list) -> (bool, float):
         request = ImageSyncScanRequest.ImageSyncScanRequest()
