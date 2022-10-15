@@ -69,7 +69,18 @@ class GenerateImage(IPluginBase):
 
         # 翻译
         keyword = plain_text.replace("，", ",").replace("\n", " ").replace("\r", " ").replace("\t", " ")
+        explict_keyword = ""
+
+        explict_pos = keyword.find("不要")
+        if explict_pos != -1:
+            explict_keyword = keyword[explict_pos + 2:]
+            keyword = keyword[:explict_pos]
+
         ret, keyword_en = self.__translate.translate(keyword, "zh", "en")
+        if ret is False:
+            return self.__fail_message % "翻译失败"
+
+        ret, explict_keyword_en = self.__translate.translate(explict_keyword, "zh", "en")
         if ret is False:
             return self.__fail_message % "翻译失败"
 
@@ -109,8 +120,9 @@ class GenerateImage(IPluginBase):
         bot = nonebot.get_bot()
         try:
             info = f'正在画画......\n' \
-                   f'{keyword_en}\n' \
-                   f'使用{model_name_cn}模型'
+                   f'包含{keyword_en}\n'
+            if len(explict_keyword_en) > 0:
+                info += f'排除{explict_keyword_en}\n'
             if image is not None:
                 info += f'\n使用图片{image.width}x{image.height}'
             if keyword_en.find(",") <= 0 and keyword.find(" ") >= 0:
@@ -122,11 +134,11 @@ class GenerateImage(IPluginBase):
             logger.error(f"Image::handle_event send info failed:{e}")
             return self.__fail_message % "发送信息失败"
 
-        ret, message, buffer = await self.__generate_image(token, model_name, keyword_en, image)
+        ret, message, buffer = await self.__generate_image(token, model_name, keyword_en, explict_keyword_en, image)
         if ret is False:
             return self.__fail_message % f"生成图片失败:{message}"
         elif len(buffer) == 0:
-            return self.__fail_message % "生成图片失败,返回空"
+            return self.__fail_message % "生成图片失败,返回空,再试试"
 
         ret, score = self.__green.get_image_score_by_bytes(io.BytesIO(b64decode(buffer)))
         if ret is False:
@@ -187,12 +199,16 @@ class GenerateImage(IPluginBase):
             logger.error(f"Image::__get_image failed:{url} {e}")
             return False, None
 
-    async def __generate_image(self, token: str, model: str, keyword_en: str, image: Image = None) -> (bool, str, str):
+    async def __generate_image(self, token: str, model: str, keyword_en: str, explict_keyword_en: str, image: Image = None) -> (bool, str, str):
         try:
             keyword_en = keyword_en + "masterpiece, best quality, "
             low_quality = 'nsfw, lowres, text, cropped, worst quality, low quality, normal quality, ' \
                           'jpeg artifacts, signature, watermark, username, blurry'
             bad_anatomy = 'bad anatomy, bad hands, error, missing fingers, extra digit, fewer digits'
+            if len(explict_keyword_en) > 0:
+                uc = explict_keyword_en
+            else:
+                uc = low_quality + ", " + bad_anatomy
             header = {
                 "Authorization": f"Bearer {token}",
                 "Authority": "api.novelai.net",
@@ -212,7 +228,7 @@ class GenerateImage(IPluginBase):
                         "sampler": "k_euler_ancestral",
                         "scale": 11,
                         "steps": 28,
-                        "uc": f"{low_quality}, {bad_anatomy}",
+                        "uc": uc,
                         "ucPreset": 0,
                         "seed": int(time.time()),
                     }
@@ -244,7 +260,7 @@ class GenerateImage(IPluginBase):
                         "scale": 11,
                         "steps": 50,
                         "strength": 0.7,
-                        "uc": f"{low_quality}, {bad_anatomy}",
+                        "uc": uc,
                         "ucPreset": 0,
                         "image": img_str,
                         "seed": int(time.time()),

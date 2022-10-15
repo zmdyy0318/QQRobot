@@ -38,10 +38,9 @@ bean_container.register(green)
 
 module_list = [
     GenerateImage(bean_container, plugin_keyword, "画个什么?\n"
-                                                  "格式:画个(福瑞)+关键词+图片(可选),关键词用逗号分隔.\n"
+                                                  "格式:画个+关键词+(不要+关键词)+(图片),关键词用逗号分隔.\n"
                                                   "例如:\n"
-                                                  "画个男孩,床上,玩游戏\n"
-                                                  "画个福瑞男孩,床上,玩游戏"),
+                                                  "画个男孩,床上,玩游戏不要女孩"),
 ]
 
 
