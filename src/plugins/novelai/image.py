@@ -122,9 +122,11 @@ class GenerateImage(IPluginBase):
             logger.error(f"Image::handle_event send info failed:{e}")
             return self.__fail_message % "发送信息失败"
 
-        ret, code, buffer = await self.__generate_image(token, model_name, keyword_en, image)
-        if ret is False or len(buffer) == 0:
-            return self.__fail_message % f"生成图片失败:{code}"
+        ret, message, buffer = await self.__generate_image(token, model_name, keyword_en, image)
+        if ret is False:
+            return self.__fail_message % f"生成图片失败:{message}"
+        elif len(buffer) == 0:
+            return self.__fail_message % "生成图片失败,返回空"
 
         ret, score = self.__green.get_image_score_by_bytes(io.BytesIO(b64decode(buffer)))
         if ret is False:
@@ -185,7 +187,7 @@ class GenerateImage(IPluginBase):
             logger.error(f"Image::__get_image failed:{url} {e}")
             return False, None
 
-    async def __generate_image(self, token: str, model: str, keyword_en: str, image: Image = None) -> (bool, int, str):
+    async def __generate_image(self, token: str, model: str, keyword_en: str, image: Image = None) -> (bool, str, str):
         try:
             keyword_en = keyword_en + "masterpiece, best quality, "
             low_quality = 'nsfw, lowres, text, cropped, worst quality, low quality, normal quality, ' \
@@ -252,10 +254,10 @@ class GenerateImage(IPluginBase):
             response = httpx.post(self.__url + "/ai/generate-image", headers=header, json=body, timeout=40)
             if response.status_code != 201:
                 logger.error(f"Image::__generate_image failed, status_code:{response.status_code}")
-                return False, response.status_code, None
+                return False, str(response.status_code), None
             base64_str = response.text[27:]
-            return True, response.status_code, base64_str
+            return True, str(response.status_code), base64_str
         except (Exception,) as e:
             logger.error(f"Image::__generate_image failed, e:{e}")
-            return False, -1, None
+            return False, str(e), None
 
