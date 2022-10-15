@@ -123,7 +123,7 @@ class GenerateImage(IPluginBase):
             return self.__fail_message % "发送信息失败"
 
         ret, code, buffer = await self.__generate_image(token, model_name, keyword_en, image)
-        if ret is False:
+        if ret is False or len(buffer) == 0:
             return self.__fail_message % f"生成图片失败:{code}"
 
         ret, score = self.__green.get_image_score_by_bytes(io.BytesIO(b64decode(buffer)))

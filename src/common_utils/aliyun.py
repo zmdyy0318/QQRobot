@@ -97,7 +97,7 @@ class Green(ICore):
                 elif suggestion == "block":
                     score_sum += score
                     score_count += 1
-                return True, score_sum / score_count
+            return True, score_sum / score_count
         except Exception as e:
             logger.error(f"Green do_action error, e:{e}")
             return False, 0.0
