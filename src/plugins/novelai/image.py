@@ -121,9 +121,9 @@ class GenerateImage(IPluginBase):
         bot = nonebot.get_bot()
         try:
             info = f'正在画画......\n' \
-                   f'包含{keyword_en}\n'
+                   f'包含{keyword_en}'
             if len(explict_keyword_en) > 0:
-                info += f'排除{explict_keyword_en}\n'
+                info += f'\n排除{explict_keyword_en}'
             if image is not None:
                 info += f'\n使用图片{image.width}x{image.height}'
             if keyword_en.find(",") <= 0 and keyword.find(" ") >= 0:
