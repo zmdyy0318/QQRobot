@@ -2,6 +2,7 @@ import io
 import json
 import uuid
 import time
+import oss2
 from abc import ABCMeta
 from base64 import b64decode
 from aliyunsdkcore import client
@@ -266,3 +267,32 @@ class Translate(ICore):
         except Exception as e:
             logger.error(f"Translate do_action error, e:{e}")
             return False, ""
+
+
+class Oss:
+    def __init__(self, access_key_id: str, access_key_secret: str, region: str, bucket_name: str, bucket_url: str = None):
+        self.__access_key_id = access_key_id
+        self.__access_key_secret = access_key_secret
+        self.__region = region
+        self.__bucket_name = bucket_name
+        self.__bucket_url = bucket_url
+        self.__auth = oss2.Auth(self.__access_key_id, self.__access_key_secret)
+        self.__bucket = oss2.Bucket(self.__auth, f"https://oss-{self.__region}.aliyuncs.com", bucket_name)
+
+    def upload_file(self, file_name: str, file_byte: bytes) -> bool:
+        try:
+            self.__bucket.put_object(file_name, file_byte)
+            return True
+        except Exception as e:
+            logger.error(f"Oss upload_file error, e:{e}")
+            return False
+
+    def get_sign_url(self, file_name: str, expire: int = 60 * 60) -> (bool, str):
+        try:
+            url = self.__bucket.sign_url("GET", file_name, expire, slash_safe=True)
+            if self.__bucket_url is not None:
+                url = url.replace(f"https://{self.__bucket_name}.oss-{self.__region}.aliyuncs.com", self.__bucket_url)
+            return True, url
+        except Exception as e:
+            logger.error(f"Oss get_sign_url error, e:{e}")
+            return False, None

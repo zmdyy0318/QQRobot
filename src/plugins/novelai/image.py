@@ -7,8 +7,7 @@ from base64 import b64decode, b64encode
 from novelai_api import NovelAI_API, NovelAIError
 from src.common_utils.interface import IPluginBase
 from src.common_utils.database import Database
-from src.common_utils.aliyun import Translate
-from src.common_utils.aliyun import Green
+from src.common_utils.aliyun import Translate, Green, Oss
 from nonebot.log import logger
 from nonebot.adapters.onebot.v11 import GroupMessageEvent
 from nonebot.adapters.onebot.v11.message import Message, MessageSegment
@@ -24,12 +23,14 @@ class GenerateImage(IPluginBase):
     __translate: Translate
     __config: Config
     __green: Green
+    __oss: Oss
 
     def init_module(self):
         self.__db = self.bean_container.get_bean(Database)
         self.__config = self.bean_container.get_bean(Config)
         self.__translate = self.bean_container.get_bean(Translate)
         self.__green = self.bean_container.get_bean(Green)
+        self.__oss = self.bean_container.get_bean(Oss)
 
     async def handle_event(self, event: GroupMessageEvent):
         group_id = int(event.group_id)
@@ -139,17 +140,28 @@ class GenerateImage(IPluginBase):
             return self.__fail_message % f"生成图片失败:{message}"
         elif len(buffer) == 0:
             return self.__fail_message % "生成图片失败,返回空,再试试"
-
-        ret, score = self.__green.get_image_score_by_bytes(io.BytesIO(b64decode(buffer)))
+        buffer_bytes = b64decode(buffer)
+        ret, score = self.__green.get_image_score_by_bytes(io.BytesIO(buffer_bytes))
         if ret is False:
             return self.__fail_message % "图片检查失败"
 
         if score > 0.5:
-            return "画好了,太涩了,不给看"
+            save_path = f"novelai/{group_id}/{int(time.time())}.png"
+            ret = self.__oss.upload_file(save_path, buffer_bytes)
+            sign_url = ""
+            if ret is True:
+                ret, sign_url = self.__oss.get_sign_url(save_path, 10 * 60)
+            if len(sign_url) == 0:
+                ret_msg = "画好了,太涩了,没处理好"
+            else:
+                ret_msg = f"画好了,太涩了,在这里:\n" \
+                          f"{sign_url}\n" \
+                          f"10分钟过期"
+        else:
+            ret_msg = MessageSegment.image(f"base64://{buffer}")
 
         try:
-            img = MessageSegment.image(f"base64://{buffer}")
-            await bot.send_group_msg(group_id=group_id, message=img)
+            await bot.send_group_msg(group_id=group_id, message=ret_msg)
         except Exception as e:
             logger.error(f"Image::handle_event send image failed:{e}")
             return self.__fail_message % "发送图片失败"
