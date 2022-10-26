@@ -278,13 +278,13 @@ class GenerateImage(IPluginBase):
                         "seed": int(time.time()),
                     }
                 }
-
-            response = httpx.post(self.__url + "/ai/generate-image", headers=header, json=body, timeout=40)
-            if response.status_code != 201:
-                logger.error(f"Image::__generate_image failed, status_code:{response.status_code}")
-                return False, str(response.status_code), None
-            base64_str = response.text[27:]
-            return True, str(response.status_code), base64_str
+            async with httpx.AsyncClient(headers=header, timeout=40) as client:
+                response = await client.post(self.__url + "/ai/generate-image", headers=header, json=body, timeout=40)
+                if response.status_code != 201:
+                    logger.error(f"Image::__generate_image failed, status_code:{response.status_code}")
+                    return False, str(response.status_code), None
+                base64_str = response.text[27:]
+                return True, str(response.status_code), base64_str
         except (Exception,) as e:
             logger.error(f"Image::__generate_image failed, e:{e}")
             return False, str(e), None
