@@ -91,6 +91,28 @@ class GenerateImage(IPluginBase):
             logger.error(f"Image::handle_event get_value failed:{self.__db.get_last_error_msg()}")
             return self.__fail_message % "数据库错误"
 
+        image = None
+        for seg in event.get_message():
+            if seg.type == "image":
+                ret, image = await self.__get_image(seg.data["url"])
+                if ret is False:
+                    return self.__fail_message % "下载图片失败"
+
+        bot = nonebot.get_bot()
+        try:
+            info = f'正在画画......\n' \
+                   f'包含{keyword_en}'
+            if len(explict_keyword_en) > 0:
+                info += f'\n排除{explict_keyword_en}'
+            if image is not None:
+                info += f'\n使用图片{image.width}x{image.height}'
+            if keyword_en.find(",") <= 0 and keyword.find(" ") >= 0:
+                info += f'\n关键词之间记得用逗号分开哦'
+            await bot.send_group_msg(group_id=group_id, message=info)
+        except Exception as e:
+            logger.error(f"Image::handle_event send info failed:{e}")
+            return self.__fail_message % "发送信息失败"
+
         # 验证token
         point = 0
         need_login = False
@@ -110,30 +132,6 @@ class GenerateImage(IPluginBase):
             ret, message, point = await self.__get_point(token)
             if ret is False:
                 return self.__fail_message % f"获取积分失败:{message}"
-
-        image = None
-        for seg in event.get_message():
-            if seg.type == "image":
-                ret, image = await self.__get_image(seg.data["url"])
-                if ret is False:
-                    return self.__fail_message % "下载图片失败"
-
-        bot = nonebot.get_bot()
-        try:
-            info = f'正在画画......\n' \
-                   f'包含{keyword_en}'
-            if len(explict_keyword_en) > 0:
-                info += f'\n排除{explict_keyword_en}'
-            if image is not None:
-                info += f'\n使用图片{image.width}x{image.height}'
-            if keyword_en.find(",") <= 0 and keyword.find(" ") >= 0:
-                info += f'\n关键词之间记得用逗号分开哦'
-            if point < 50:
-                info += f'\n我要被榨干了'
-            await bot.send_group_msg(group_id=group_id, message=info)
-        except Exception as e:
-            logger.error(f"Image::handle_event send info failed:{e}")
-            return self.__fail_message % "发送信息失败"
 
         ret, message, buffer = await self.__generate_image(token, model_name, keyword_en, explict_keyword_en, image)
         if ret is False:
@@ -234,8 +232,8 @@ class GenerateImage(IPluginBase):
                     "input": keyword_en,
                     "model": model,
                     "parameters": {
-                        "height": 384,
-                        "width": 384,
+                        "height": 512,
+                        "width": 512,
                         "n_samples": 1,
                         "sampler": "k_euler_ancestral",
                         "scale": 11,
@@ -264,8 +262,8 @@ class GenerateImage(IPluginBase):
                     "input": keyword_en,
                     "model": model,
                     "parameters": {
-                        "height": 384,
-                        "width": 384,
+                        "height": 512,
+                        "width": 512,
                         "n_samples": 1,
                         "noise": 0.2,
                         "sampler": "k_euler_ancestral",
