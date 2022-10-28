@@ -24,6 +24,7 @@ class GenerateImage(IPluginBase):
     __config: Config
     __green: Green
     __oss: Oss
+    __proxy_url: str
 
     def init_module(self):
         self.__db = self.bean_container.get_bean(Database)
@@ -31,6 +32,7 @@ class GenerateImage(IPluginBase):
         self.__translate = self.bean_container.get_bean(Translate)
         self.__green = self.bean_container.get_bean(Green)
         self.__oss = self.bean_container.get_bean(Oss)
+        self.__proxy_url = f"http://{self.__config.proxy_host}:{self.__config.proxy_port}"
 
     async def handle_event(self, event: GroupMessageEvent):
         group_id = int(event.group_id)
@@ -133,11 +135,19 @@ class GenerateImage(IPluginBase):
             if ret is False:
                 return self.__fail_message % f"获取积分失败:{message}"
 
-        ret, message, buffer = await self.__generate_image(token, model_name, keyword_en, explict_keyword_en, image)
-        if ret is False:
-            return self.__fail_message % f"生成图片失败:{message}"
-        elif len(buffer) == 0:
-            return self.__fail_message % "生成图片失败,返回空,再试试"
+        ret, message, buffer = await self.__generate_image(token, model_name, keyword_en, explict_keyword_en,
+                                                           True, image)
+        if ret is False or len(buffer) == 0:
+            try:
+                await bot.send_group_msg(group_id=group_id, message=f"生成图片失败:{message}, 正在重试......")
+            except Exception as e:
+                logger.error(f"Image::handle_event send info failed:{e}")
+                return self.__fail_message % "发送信息失败"
+            ret, message, buffer = await self.__generate_image(token, model_name, keyword_en, explict_keyword_en,
+                                                               False, image)
+            if ret is False or len(buffer) == 0:
+                return self.__fail_message % f"生成图片失败:{message}, 请稍后再试"
+
         buffer_bytes = b64decode(buffer)
         ret, score = self.__green.get_image_score_by_bytes(io.BytesIO(buffer_bytes))
         if ret is False:
@@ -209,7 +219,10 @@ class GenerateImage(IPluginBase):
             logger.error(f"Image::__get_image failed:{url} {e}")
             return False, None
 
-    async def __generate_image(self, token: str, model: str, keyword_en: str, explict_keyword_en: str, image: Image = None) -> (bool, str, str):
+    async def __generate_image(self, token: str, model: str,
+                               keyword_en: str, explict_keyword_en: str,
+                               use_proxy: bool = False,
+                               image: Image = None) -> (bool, str, str):
         try:
             keyword_en = keyword_en + "masterpiece, best quality, "
             low_quality = 'nsfw, lowres, text, cropped, worst quality, low quality, normal quality, ' \
@@ -276,8 +289,11 @@ class GenerateImage(IPluginBase):
                         "seed": int(time.time()),
                     }
                 }
-            async with httpx.AsyncClient(headers=header, timeout=40) as client:
-                response = await client.post(self.__url + "/ai/generate-image", headers=header, json=body, timeout=40)
+            proxy_url = None
+            if use_proxy:
+                proxy_url = self.__proxy_url
+            async with httpx.AsyncClient(headers=header, timeout=40, proxies=proxy_url) as client:
+                response = await client.post(self.__url + "/ai/generate-image", json=body)
                 if response.status_code != 201:
                     logger.error(f"Image::__generate_image failed, status_code:{response.status_code}")
                     return False, str(response.status_code), None

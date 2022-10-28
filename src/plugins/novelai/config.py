@@ -10,6 +10,8 @@ class Config(BaseSettings):
     ali_oss_bucket_url: str
     nai_username: str
     nai_password: str
+    proxy_host: str
+    proxy_port: str
 
     class Config:
         extra = "ignore"
