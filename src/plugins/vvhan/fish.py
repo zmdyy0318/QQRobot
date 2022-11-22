@@ -20,13 +20,13 @@ class Fish(IPluginBase):
         self.__db = self.bean_container.get_bean(Database)
 
     async def handle_event(self, event: GroupMessageEvent):
-        ret, buffer = self.__get_image()
+        ret, buffer = await self.__get_image()
         if ret is False:
             return self.__fetch_fail % "获取图片失败"
         return Message(MessageSegment.image(buffer))
 
     async def task(self, groups: list):
-        ret, time_flag = self.__get_time_flag()
+        ret, time_flag = await self.__get_time_flag()
         if ret is False or len(time_flag) == 0:
             logger.error(f"Fish::task __get_time_flag failed")
             return
@@ -51,8 +51,7 @@ class Fish(IPluginBase):
                 self.__db.update_value(group, "last_fish_flag", time_flag)
                 continue
             else:
-                self.__db.update_value(group, "last_fish_flag", time_flag)
-                ret, buffer = self.__get_image()
+                ret, buffer = await self.__get_image()
                 if ret is False:
                     logger.error(f"Fish::task __get_image failed")
                     continue
@@ -62,37 +61,40 @@ class Fish(IPluginBase):
                 except Exception as e:
                     logger.error(f"Fish::task send_group_msg failed:{e}")
                     continue
+                self.__db.update_value(group, "last_fish_flag", time_flag)
 
-    def __get_time_flag(self) -> (bool, str):
+    async def __get_time_flag(self) -> (bool, str):
         try:
-            response = httpx.get(self.__url + "?type=json")
-            if response.status_code != 200:
-                logger.error(f"Fish::__get_time_flag failed, status_code:{response.status_code}")
-                return False, None
-            json_res = json.loads(response.text)
-            if not json_res:
-                logger.error(f"Fish::__get_time_flag failed, json_res is None")
-                return False, None
-            if json_res["success"] is not True:
-                logger.error(f"Fish::__get_time_flag failed, success is False")
-                return False, None
-            url = json_res["url"]
-            if url is None:
-                logger.error(f"Fish::__get_time_flag failed, url is None")
-                return False, None
-            flag = re.search("origin/(.*?).png", url).group(1)
-            return True, flag
+            async with httpx.AsyncClient() as client:
+                response = await client.get(self.__url + "?type=json")
+                if response.status_code != 200:
+                    logger.error(f"Fish::__get_time_flag failed, status_code:{response.status_code}")
+                    return False, None
+                json_res = json.loads(response.text)
+                if not json_res:
+                    logger.error(f"Fish::__get_time_flag failed, json_res is None")
+                    return False, None
+                if json_res["success"] is not True:
+                    logger.error(f"Fish::__get_time_flag failed, success is False")
+                    return False, None
+                url = json_res["url"]
+                if url is None:
+                    logger.error(f"Fish::__get_time_flag failed, url is None")
+                    return False, None
+                flag = re.search("origin/(.*?).png", url).group(1)
+                return True, flag
         except (Exception,) as e:
             logger.error(f"Fish::__get_time_flag failed, e:{e}")
             return False, None
 
-    def __get_image(self) -> (bool, io.BytesIO):
+    async def __get_image(self) -> (bool, io.BytesIO):
         try:
-            response = httpx.get(self.__url, follow_redirects=True)
-            if response.status_code != 200:
-                logger.error(f"Fish::__get_image failed, status_code:{response.status_code}")
-                return False, None
-            return True, io.BytesIO(response.content)
+            async with httpx.AsyncClient() as client:
+                response = await client.get(self.__url, follow_redirects=True)
+                if response.status_code != 200:
+                    logger.error(f"Fish::__get_image failed, status_code:{response.status_code}")
+                    return False, None
+                return True, io.BytesIO(response.content)
         except (Exception,) as e:
             logger.error(f"Fish::__get_image failed, e:{e}")
             return False, None
