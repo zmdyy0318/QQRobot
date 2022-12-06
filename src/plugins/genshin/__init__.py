@@ -15,7 +15,7 @@ global_config = get_driver().config
 config = Config.parse_obj(global_config)
 plugin_name = "genshin"
 plugin_keyword = "原神"
-if global_config.environment is not None and global_config.environment == "dev":
+if hasattr(global_config, "environment") and global_config.environment == "dev":
     plugin_keyword = "/" + plugin_keyword
 
 data_base_col = {

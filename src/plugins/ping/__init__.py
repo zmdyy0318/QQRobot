@@ -17,7 +17,7 @@ global_config = get_driver().config
 config = Config.parse_obj(global_config)
 plugin_name = "ping"
 plugin_keyword = "ping"
-if global_config.environment is not None and global_config.environment == "dev":
+if hasattr(global_config, "environment") and global_config.environment == "dev":
     plugin_keyword = "/" + plugin_keyword
 global_core = GlobalCore()
 

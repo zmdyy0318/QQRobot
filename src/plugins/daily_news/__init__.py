@@ -16,7 +16,7 @@ global_config = get_driver().config
 config = Config.parse_obj(global_config)
 plugin_name = "daily_news"
 plugin_keyword = "每日新闻"
-if global_config.environment is not None and global_config.environment == "dev":
+if hasattr(global_config, "environment") and global_config.environment == "dev":
     plugin_keyword = "/" + plugin_keyword
 
 data_base_col = {
