@@ -60,6 +60,9 @@ class Chatter(IPluginBase):
                 return "下次还敢"
             else:
                 return "我错了"
+        elif event.to_me:
+            # @事件由其他插件处理
+            return
         else:
             handle_ret, reply_text = self.__process_chat(event.group_id, plain_text)
             if handle_ret is False or len(reply_text) == 0:
