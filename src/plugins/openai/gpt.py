@@ -3,6 +3,7 @@ import uuid
 import json
 import httpx
 import re
+import nonebot
 
 from src.common_utils.interface import IPluginBase
 from src.common_utils.database import Database
@@ -22,6 +23,15 @@ class GroupChatInfo:
         self.parent_id = parent_id
 
 
+class ResponseInfo:
+    context: str
+    send_index: int
+
+    def __init__(self):
+        self.context = ""
+        self.send_index = 0
+
+
 class ChatGPT(IPluginBase):
     __conversation_id: str
     __parent_id: str
@@ -30,6 +40,7 @@ class ChatGPT(IPluginBase):
     __config: Config
     __chat_fail = "我坏掉了,%s"
     __group_info_list: dict
+    __response_info_list: dict
 
     __auth_authorization: str
     __auth_session_token: str
@@ -45,6 +56,7 @@ class ChatGPT(IPluginBase):
         self.__db = self.bean_container.get_bean(Database)
         self.__config = self.bean_container.get_bean(Config)
         self.__group_info_list = {}
+        self.__response_info_list = {}
 
         self.__auth_authorization = ""
         self.__auth_session_token = ""
@@ -69,20 +81,59 @@ class ChatGPT(IPluginBase):
         else:
             group_chat_info = self.__group_info_list[group_id]
 
-        ret, response_text, con_id = await self.__get_chat_response(plaintext, group_chat_info)
+        ret, conversation_id, parent_id, error = await self.__process_chat_response(event, plaintext, group_chat_info)
         if ret is False:
-            return self.__chat_fail % "获取回复失败" + response_text
+            return self.__chat_fail % "获取回复失败" + error
 
-        group_chat_info.conversation_id = con_id
-        message = Message([])
-        message += MessageSegment.at(event.user_id)
-        message += MessageSegment.text(response_text)
-        return message
+        group_chat_info.conversation_id = conversation_id
+        group_chat_info.parent_id = parent_id
+        return
 
     async def task(self, groups: list):
         await self.__refresh_token()
 
-    async def __get_chat_response(self, text: str, group_chat_info: GroupChatInfo) -> (bool, str, str):
+    async def __update_chat_message(self, event: GroupMessageEvent, message_id: str, text: str, is_end: bool):
+        if message_id not in self.__response_info_list:
+            self.__response_info_list[message_id] = ResponseInfo()
+        response_info = self.__response_info_list[message_id]
+        response_info.context = text
+        new_text = text[response_info.send_index:]
+        # 小于30个字符不处理
+        if len(new_text) < 100 and is_end is False:
+            return
+
+        index_line = new_text.rfind("\n")
+        # index_stop_cn = new_text.find("。")
+        # index_stop_en = new_text.find(".")
+        if index_line > 0:
+            index = index_line
+        # elif index_stop_cn > 0:
+        #     index = index_stop_cn
+        # elif index_stop_en > 0:
+        #     index = index_stop_en
+        elif is_end is True:
+            index = len(new_text) - 1
+        else:
+            return
+
+        send_text = new_text[:index + 1]
+        response_info.send_index += len(send_text)
+
+        message = Message([])
+        message += MessageSegment.at(event.user_id)
+        message += MessageSegment.text(send_text)
+        if is_end:
+            message += MessageSegment.text("[END]")
+        else:
+            message += MessageSegment.text("[WAITING]")
+        try:
+            bot = nonebot.get_bot()
+            await bot.send_group_msg(group_id=event.group_id, message=message)
+        except Exception as e:
+            logger.error(f"__send_chat_message error:{e}")
+
+    async def __process_chat_response(self, event: GroupMessageEvent,
+                                      text: str, group_chat_info: GroupChatInfo) -> (bool, str, str, str):
         data = {
             "action": "next",
             "messages": [
@@ -98,18 +149,34 @@ class ChatGPT(IPluginBase):
         }
         url = "https://chat.openai.com/backend-api/conversation"
         try:
-            async with AsyncClient() as client:
-                response = await client.post(url, headers=self.__headers, json=data, timeout=20)
-                if response.status_code != 200:
-                    logger.error(f"__get_chat_response failed, code:{response.status_code}")
-                    return False, str(response.status_code), ""
-                response_text = response.text.replace("data: [DONE]", "")
-                data = re.findall(r'data: (.*)', response_text)[-1]
-                json_ret = json.loads(data)
-                return True, json_ret["message"]["content"]["parts"][0], json_ret["conversation_id"]
+            conversation_id = ""
+            parent_id = ""
+            client = httpx.AsyncClient()
+            async with client.stream("POST", url, headers=self.__headers, json=data, timeout=20) as response:
+                async for line in response.aiter_lines():
+                    try:
+                        if line == "" or line == "\n":
+                            continue
+                        data = line[6:]
+                        if data == "[DONE]" or data == "[DONE]\n":
+                            await self.__update_chat_message(event, parent_id, text, True)
+                        else:
+                            data_json = json.loads(data)
+                            conversation_id = data_json["conversation_id"]
+                            parent_id = data_json["message"]["id"]
+                            parts = data_json["message"]["content"]["parts"]
+                            if parts is None or len(parts) == 0:
+                                continue
+                            text = parts[0]
+                            await self.__update_chat_message(event, parent_id, text, False)
+                    except (Exception,) as e:
+                        logger.warning(f"__get_chat_response aiter_lines failed, {e}")
+                        continue
+
+                return True, conversation_id, parent_id, None
         except Exception as e:
             logger.error(f"__get_chat_response failed, e:{e}")
-            return False, str(e), ""
+            return False, None, None, str(e)
 
     async def __refresh_token(self) -> bool:
         global_key = "global"
