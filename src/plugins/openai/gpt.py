@@ -69,6 +69,7 @@ class ChatGPT(IPluginBase):
         plaintext = event.get_plaintext()
         if len(plaintext) <= 0:
             return
+
         ret = await self.__refresh_token()
         if ret is False:
             logger.error(f"__refresh_token failed")
@@ -80,6 +81,11 @@ class ChatGPT(IPluginBase):
             self.__group_info_list[group_id] = group_chat_info
         else:
             group_chat_info = self.__group_info_list[group_id]
+
+        if plaintext == "重置":
+            group_chat_info.conversation_id = ""
+            group_chat_info.parent_id = self.__generate_uuid()
+            return "会话已重置"
 
         ret, conversation_id, parent_id, error = await self.__process_chat_response(event, plaintext, group_chat_info)
         if ret is False:
