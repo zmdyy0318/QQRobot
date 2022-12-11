@@ -83,7 +83,7 @@ class ChatGPT(IPluginBase):
             group_chat_info = self.__group_info_list[group_id]
 
         if plaintext == "重置":
-            group_chat_info.conversation_id = ""
+            group_chat_info.conversation_id = None
             group_chat_info.parent_id = self.__generate_uuid()
             return "会话已重置"
 
