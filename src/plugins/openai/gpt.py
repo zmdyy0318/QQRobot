@@ -177,7 +177,7 @@ class ChatGPT(IPluginBase):
                         continue
 
                 return True, conversation_id, parent_id, None
-        except Exception as e:
+        except (Exception,) as e:
             logger.error(f"__get_chat_response failed, e:{e}")
             return False, None, None, str(e)
 
