@@ -152,7 +152,7 @@ class ChatGPT(IPluginBase):
             conversation_id = ""
             parent_id = ""
             client = httpx.AsyncClient()
-            async with client.stream("POST", url, headers=self.__headers, json=data, timeout=20) as response:
+            async with client.stream("POST", url, headers=self.__headers, json=data, timeout=50) as response:
                 if response.status_code != 200:
                     logger.error(f"__get_chat_response status_code failed, code:{response.status_code}")
                     return False, None, None, f"status_code:{response.status_code}"
