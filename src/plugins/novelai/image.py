@@ -67,8 +67,8 @@ class GenerateImage(IPluginBase):
             logger.error(f"Image::handle_event get_value failed:{self.__db.get_last_error_msg()}")
             return self.__fail_message % "数据库错误"
         cur_time = int(time.time())
-        if cur_time - last_time < 60:
-            return f"休息,休息{60 - (cur_time - last_time)}秒"
+        if cur_time - last_time < 30:
+            return f"休息,休息{30 - (cur_time - last_time)}秒"
 
         # 翻译
         keyword = plain_text.replace("，", ",").replace("\n", " ").replace("\r", " ").replace("\t", " ")

@@ -22,8 +22,8 @@ class Image(IPluginBase):
             ret, image_size = await self.__get_url_content_size(url)
             if ret is False:
                 continue
-            # 10kb以下的图片不计算
-            if image_size > 1024 * 10:
+            # 30kb以下的图片不计算
+            if image_size > 1024 * 30:
                 large_url_list.append(url)
 
         if len(large_url_list) == 0:

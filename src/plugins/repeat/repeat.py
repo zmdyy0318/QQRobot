@@ -121,10 +121,14 @@ class Repeat(IPluginBase):
                 return False, None
             if image.format == "GIF":
                 return False, None
-            ret, ocr_list = ocr.get_ocr_info_by_url(url)
-            if ret is False:
-                logger.error(f"Repeat __flip_image get_ocr_info_by_url failed:{url} {ocr.get_last_error_msg()}")
-                return False, None
+            # 30kb以下的图片不计算
+            if int(response.headers["Content-Length"]) > 1024 * 30:
+                ret, ocr_list = ocr.get_ocr_info_by_url(url)
+                if ret is False:
+                    logger.error(f"Repeat __flip_image get_ocr_info_by_url failed:{url} {ocr.get_last_error_msg()}")
+                    return False, None
+            else:
+                ocr_list = []
             mirror_image = ImageOps.mirror(image)
             for ocr_info in ocr_list:
                 left = min(ocr_info.pos0[0], ocr_info.pos1[0],
