@@ -272,12 +272,71 @@ class GenerateImage(IPluginBase):
                 image_width = image.width
                 image_height = image.height
                 if image_width > image_height:
-                    image_height = int(image_height * 512 / image_width)
-                    image_width = 512
+                    if image_height / image_width > 0.95:
+                        image_width = 512
+                        image_height = 512
+                    elif image_height / image_width > 0.85:
+                        image_width = 576
+                        image_height = 512
+                    elif image_height / image_width > 0.75:
+                        image_width = 640
+                        image_height = 512
+                    elif image_height / image_width > 0.65:
+                        image_width = 704
+                        image_height = 512
+                    elif image_height / image_width > 0.55:
+                        image_width = 832
+                        image_height = 512
+                    elif image_height / image_width > 0.45:
+                        image_width = 1024
+                        image_height = 512
+                    elif image_height / image_width > 0.35:
+                        image_width = 1280
+                        image_height = 512
+                    elif image_height / image_width > 0.25:
+                        image_width = 1728
+                        image_height = 512
+                    else:
+                        image_width = 512
+                        image_height = 512
+                elif image_width < image_height:
+                    if image_width / image_height > 0.95:
+                        image_width = 512
+                        image_height = 512
+                    elif image_width / image_height > 0.85:
+                        image_width = 512
+                        image_height = 576
+                    elif image_width / image_height > 0.75:
+                        image_width = 512
+                        image_height = 640
+                    elif image_width / image_height > 0.65:
+                        image_width = 512
+                        image_height = 704
+                    elif image_width / image_height > 0.55:
+                        image_width = 512
+                        image_height = 832
+                    elif image_width / image_height > 0.45:
+                        image_width = 512
+                        image_height = 1024
+                    elif image_width / image_height > 0.35:
+                        image_width = 512
+                        image_height = 1280
+                    elif image_width / image_height > 0.25:
+                        image_width = 512
+                        image_height = 1728
+                    else:
+                        image_width = 512
+                        image_height = 512
                 else:
-                    image_width = int(image_width * 512 / image_height)
+                    image_width = 512
                     image_height = 512
-                image = image.resize((image_width, image_height))
+                # if image_width > image_height:
+                #     image_height = int(image_height * 512 / image_width)
+                #     image_width = 512
+                # else:
+                #     image_width = int(image_width * 512 / image_height)
+                #     image_height = 512
+                # image = image.resize((image_width, image_height))
                 buffer = io.BytesIO()
                 if image.mode != "RGB":
                     image = image.convert("RGB")
@@ -287,8 +346,8 @@ class GenerateImage(IPluginBase):
                     "input": keyword_en,
                     "model": model,
                     "parameters": {
-                        "height": 512,
-                        "width": 512,
+                        "height": image_height,
+                        "width": image_width,
                         "n_samples": 1,
                         "noise": (1.0 - similar) / 3.5,
                         "sampler": "k_euler_ancestral",
