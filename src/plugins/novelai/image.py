@@ -2,6 +2,7 @@ import json
 import nonebot
 import httpx
 import io
+import re
 import time
 from base64 import b64decode, b64encode
 from novelai_api import NovelAI_API, NovelAIError
@@ -67,12 +68,22 @@ class GenerateImage(IPluginBase):
             logger.error(f"Image::handle_event get_value failed:{self.__db.get_last_error_msg()}")
             return self.__fail_message % "数据库错误"
         cur_time = int(time.time())
-        if cur_time - last_time < 30:
-            return f"休息,休息{30 - (cur_time - last_time)}秒"
+        if cur_time - last_time < 10:
+            return f"休息,休息{10 - (cur_time - last_time)}秒"
 
         # 翻译
         keyword = plain_text.replace("，", ",").replace("\n", " ").replace("\r", " ").replace("\t", " ")
         explict_keyword = ""
+
+        similar = 0.3
+        similar_match = re.search(r"相似度(\d.\d*)", keyword)
+        if similar_match is not None:
+            similar = float(similar_match.group(1))
+            keyword = keyword.replace(f"相似度{similar}", "")
+            if similar < 0:
+                similar = 0
+            elif similar >= 1:
+                similar = 0.99
 
         explict_pos = keyword.find("不要")
         if explict_pos != -1:
@@ -108,6 +119,7 @@ class GenerateImage(IPluginBase):
                 info += f'\n排除{explict_keyword_en}'
             if image is not None:
                 info += f'\n使用图片{image.width}x{image.height}'
+                info += f'\n相似度{similar}'
             if keyword_en.find(",") <= 0 and keyword.find(" ") >= 0:
                 info += f'\n关键词之间记得用逗号分开哦'
             await bot.send_group_msg(group_id=group_id, message=info)
@@ -135,7 +147,7 @@ class GenerateImage(IPluginBase):
             if ret is False:
                 return self.__fail_message % f"获取积分失败:{message}"
 
-        ret, message, buffer = await self.__generate_image(token, model_name, keyword_en, explict_keyword_en,
+        ret, message, buffer = await self.__generate_image(token, model_name, keyword_en, explict_keyword_en, similar,
                                                            True, image)
         if ret is False or len(buffer) == 0:
             try:
@@ -143,7 +155,7 @@ class GenerateImage(IPluginBase):
             except Exception as e:
                 logger.error(f"Image::handle_event send info failed:{e}")
                 return self.__fail_message % "发送信息失败"
-            ret, message, buffer = await self.__generate_image(token, model_name, keyword_en, explict_keyword_en,
+            ret, message, buffer = await self.__generate_image(token, model_name, keyword_en, explict_keyword_en, similar,
                                                                False, image)
             if ret is False or len(buffer) == 0:
                 return self.__fail_message % f"生成图片失败:{message}, 请稍后再试"
@@ -220,7 +232,7 @@ class GenerateImage(IPluginBase):
             return False, None
 
     async def __generate_image(self, token: str, model: str,
-                               keyword_en: str, explict_keyword_en: str,
+                               keyword_en: str, explict_keyword_en: str, similar: float,
                                use_proxy: bool = False,
                                image: Image = None) -> (bool, str, str):
         try:
@@ -278,11 +290,11 @@ class GenerateImage(IPluginBase):
                         "height": 512,
                         "width": 512,
                         "n_samples": 1,
-                        "noise": 0.2,
+                        "noise": (1.0 - similar) / 3.5,
                         "sampler": "k_euler_ancestral",
                         "scale": 11,
                         "steps": 50,
-                        "strength": 0.7,
+                        "strength": 1.0 - similar,
                         "uc": uc,
                         "ucPreset": 0,
                         "image": img_str,
