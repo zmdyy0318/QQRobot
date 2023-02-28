@@ -32,11 +32,14 @@ class FetchNews(IPluginBase):
             post_id = post["post_id"]
             subject = post["subject"]
             images = post["images"]
+            cover = post["cover"]
             message += MessageSegment.text(f"{subject}\n")
             message += MessageSegment.text(f"{self.__bbs_url}{post_id}\n")
             if len(images) > 0:
                 image_url = images[0]
                 message += MessageSegment.image(image_url)
+            if len(cover) > 0:
+                message += MessageSegment.image(cover)
         return message
 
     async def task(self, groups: list):
@@ -90,12 +93,15 @@ class FetchNews(IPluginBase):
                     continue
                 subject = post["subject"]
                 images = post["images"]
+                cover = post["cover"]
                 db_post_ids_list.append(post_id)
                 message += MessageSegment.text(f"{subject}\n")
                 message += MessageSegment.text(f"{self.__bbs_url}{post_id}\n")
                 if len(images) > 0:
                     image_url = post["images"][0]
                     message += MessageSegment.image(image_url)
+                if len(cover) > 0:
+                    message += MessageSegment.image(cover)
                 send_count += 1
 
             db_post_ids_list.sort()

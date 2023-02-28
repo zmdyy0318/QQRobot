@@ -160,6 +160,7 @@ class API:
                 post_id: str = new["post"]["post_id"]
                 subject: str = new["post"]["subject"]
                 images: list = new["post"]["images"]
+                cover: str = new["post"]["cover"]
         except (Exception,) as e:
             logger.error(f"API::init_user_role dict error, e: {e}")
             self.__last_error_msg = "获取新闻失败,请联系管理员"
