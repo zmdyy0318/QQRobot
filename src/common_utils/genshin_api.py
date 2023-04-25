@@ -150,8 +150,8 @@ class API:
         def __init__(self, news_list: list):
             self.news_list = news_list
 
-    async def get_news(self, page_size: int, news_type: int) -> (bool, list):
-        data_ret = await self.__get_news(page_size, news_type)
+    async def get_news(self, page_size: int, news_type: int, gids: int) -> (bool, list):
+        data_ret = await self.__get_news(page_size, news_type, gids)
         if data_ret is None:
             return False, None
         try:
@@ -337,9 +337,9 @@ class API:
             return None
         return data
 
-    async def __get_news(self, page_size: int, news_type: int):
+    async def __get_news(self, page_size: int, news_type: int, gids: int):
         query = {
-            "gids": "2",
+            "gids": gids,
             "page_size":  page_size,
             "type": news_type
         }

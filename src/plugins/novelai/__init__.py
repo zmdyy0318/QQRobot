@@ -7,7 +7,7 @@ from .config import Config
 from src.common_utils.database import Database
 from src.common_utils.system import BeanContainer
 from src.common_utils.aliyun import Translate, Green, Oss
-from .image import GenerateImage
+# from .image import GenerateImage
 require('core')
 from src.plugins.core.core import GlobalCore
 
@@ -39,14 +39,14 @@ bean_container.register(green)
 bean_container.register(oss)
 
 module_list = [
-    GenerateImage(bean_container, plugin_keyword, "画个什么?\n"
-                                                  "格式:画个+关键词+(换行)\n"
-                                                  "(不要+关键词)+(换行)\n"
-                                                  "(相似度0.3)+(图片),关键词用逗号分隔.\n"
-                                                  "例如:\n"
-                                                  "画个男孩,床上,玩游戏"
-                                                  "不要女孩,桌子"
-                                                  "相似度0.3[图片]"),
+    # GenerateImage(bean_container, plugin_keyword, "画个什么?\n"
+    #                                               "格式:画个+关键词+(换行)\n"
+    #                                               "(不要+关键词)+(换行)\n"
+    #                                               "(相似度0.3)+(图片),关键词用逗号分隔.\n"
+    #                                               "例如:\n"
+    #                                               "画个男孩,床上,玩游戏"
+    #                                               "不要女孩,桌子"
+    #                                               "相似度0.3[图片]"),
 ]
 
 

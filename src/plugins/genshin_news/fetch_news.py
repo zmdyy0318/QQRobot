@@ -11,15 +11,15 @@ from nonebot.adapters.onebot.v11.message import Message, MessageSegment
 class FetchNews(IPluginBase):
     __fetched_news = "获取新闻成功,%s"
     __fetch_fail = "获取新闻失败,%s"
-    __bbs_url = "https://bbs.mihoyo.com/ys/article/"
 
     def init_module(self):
         pass
 
     async def handle_event(self, event: GroupMessageEvent):
         url_type = self.get_url_type()
+        game_type = self.get_game_type()
         gs = API()
-        success, news_list = await gs.get_news(3, url_type)
+        success, news_list = await gs.get_news(3, url_type, game_type)
         if success is False:
             return self.__fetch_fail % gs.get_last_error_msg()
 
@@ -34,7 +34,7 @@ class FetchNews(IPluginBase):
             images = post["images"]
             cover = post["cover"]
             message += MessageSegment.text(f"{subject}\n")
-            message += MessageSegment.text(f"{self.__bbs_url}{post_id}\n")
+            message += MessageSegment.text(f"{self.get_bbs_url()}{post_id}\n")
             if len(images) > 0:
                 image_url = images[0]
                 message += MessageSegment.image(image_url)
@@ -44,11 +44,12 @@ class FetchNews(IPluginBase):
 
     async def task(self, groups: list):
         url_type = self.get_url_type()
+        game_type = self.get_game_type()
 
         db: Database = self.bean_container.get_bean(Database)
         gs = API()
 
-        success, news = await gs.get_news(15, url_type)
+        success, news = await gs.get_news(15, url_type, game_type)
         if success is False:
             logger.error(f"FetchNews task get news error:{gs.get_last_error_msg()}")
             return
@@ -63,6 +64,7 @@ class FetchNews(IPluginBase):
                 db.insert_key(group)
                 db.update_value(group, "types", "[1, 3]")
                 db.update_value(group, "post_ids", "[]")
+                db.update_value(group, "gids", "[2, 6]")
 
             ret, db_types_str = db.get_value(group, "types")
             if ret is False:
@@ -80,8 +82,16 @@ class FetchNews(IPluginBase):
             if ret is False:
                 logger.error(f"FetchNews task json_str_to_list failed:{db_post_ids_str}")
                 continue
+            ret, game_types_str = db.get_value(group, "gids")
+            if ret is False:
+                logger.error(f"FetchNews task get_value failed:{db.get_last_error_msg()}")
+                continue
+            ret, game_type_list = JsonUtil.json_str_to_list(game_types_str)
+            if ret is False:
+                logger.error(f"FetchNews task json_str_to_list failed:{game_types_str}")
+                continue
 
-            if url_type not in db_type_list:
+            if url_type not in db_type_list or game_type not in game_type_list:
                 continue
 
             message = Message([])
@@ -96,7 +106,7 @@ class FetchNews(IPluginBase):
                 cover = post["cover"]
                 db_post_ids_list.append(post_id)
                 message += MessageSegment.text(f"{subject}\n")
-                message += MessageSegment.text(f"{self.__bbs_url}{post_id}\n")
+                message += MessageSegment.text(f"{self.get_bbs_url()}{post_id}\n")
                 if len(images) > 0:
                     image_url = post["images"][0]
                     message += MessageSegment.image(image_url)
@@ -130,3 +140,19 @@ class FetchNews(IPluginBase):
         elif key_word.find("获取资讯") >= 0:
             return 3
         return 0
+
+    def get_game_type(self) -> int:
+        key_word = self.get_keyword()
+        if key_word.find("原神") >= 0:
+            return 2
+        elif key_word.find("星铁") >= 0:
+            return 6
+        return 0
+
+    def get_bbs_url(self) -> str:
+        key_word = self.get_keyword()
+        if key_word.find("原神") >= 0:
+            return "https://bbs.mihoyo.com/ys/article/"
+        elif key_word.find("星铁") >= 0:
+            return "https://bbs.mihoyo.com/sr/article/"
+        return ""
