@@ -104,6 +104,8 @@ class FetchNews(IPluginBase):
                 subject = post["subject"]
                 images = post["images"]
                 cover = post["cover"]
+                if url_type == 3 and len(cover) <= 0:
+                    continue
                 db_post_ids_list.append(post_id)
                 message += MessageSegment.text(f"{subject}\n")
                 message += MessageSegment.text(f"{self.get_bbs_url()}{post_id}\n")
@@ -116,7 +118,7 @@ class FetchNews(IPluginBase):
 
             db_post_ids_list.sort()
             if len(db_post_ids_list) > 100:
-                db_post_ids_list = db_post_ids_list[-100:]
+                db_post_ids_list.clear()
             if send_count > 0:
                 ret = db.update_value(group, "post_ids", JsonUtil.list_to_json_str(db_post_ids_list))
                 if ret is False:
